@@ -1,4 +1,13 @@
 {% extends 'main.html' %}
 {% block content %}
     <h1> Home</h1>
+    {% for user in Users %}
+    {{user.username}} <br>
+    <!--jak se to má zobrazit-->
+    {% endfor %}
+    <form method="post">
+        {{form}}
+        <input type="submit">
+
+    </form>
 {% endblock %}
