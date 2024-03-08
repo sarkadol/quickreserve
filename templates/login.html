@@ -1,0 +1,16 @@
+{% extends 'main.html' %}
+{% include 'messages.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+        
+    <div class="container-md">
+        
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <h2>Login</h2>
+            {{form.as_p}}
+            <input type="submit" value="Login" />
+            <p>Don't have an account? <a href="{%url 'register' %}">Register</a></p>
+        </form>
+    </div>
+{% endblock %}
