@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from .forms import LoginForm,RegisterForm
 
+# https://www.pythontutorial.net/django-tutorial/django-registration/
 def sign_up(request):
     if request.method == 'GET':
         form = RegisterForm()
@@ -36,7 +37,7 @@ def sign_in(request):
             if user:
                 login(request, user)
                 messages.success(request,f'Hi {username.title()}, welcome back!')
-                return redirect('manager_home') #succeess page here must be redirect, not return
+                return redirect('manager_home') #succeess page: here must be redirect, not return
         
         # form is not valid or user is not authenticated
         messages.error(request,f' Invalid username or password')

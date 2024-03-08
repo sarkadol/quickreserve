@@ -2,15 +2,46 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    
-    <div class="container-md">
-        <h1> Manager home </h1>
 
-        {% for user in Users %}
-        {{user.username}} <br>
-        <!--jak se to má zobrazit-->
-        {% endfor %}
-        
-    </div>
+<div class="container-md">
+    <h1> Manager home </h1>
+    <h2>My offers</h2>
+    {% if offers %}
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Offer name</th>
+                <th scope="col">Available from</th>
+                <th scope="col">Available to</th>
+                <th scope="col">Created at</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for offer in offers %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ offer.offer_name }} </td>
+                <td>{{ offer.available_from }} </td>
+                <td>{{ offer.available_to }} </td>
+                <td>{{ offer.created_at }} </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
+    {% else %}
+    <p>You do not have any offers.<br>
+        <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
+    </p>
+    {% endif %}
+    
+    <h2>All users</h2>
+    {% for user in Users %}
+    {{user.username}} <br>
+    {% endfor %}
+    <br>
+
+</div>
 
 {% endblock %}
