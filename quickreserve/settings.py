@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'base.apps.BaseConfig',
     'crispy_forms',
-    "crispy_bootstrap5"
+    'crispy_bootstrap5'
 ]
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 LOGIN_URL = 'login'

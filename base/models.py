@@ -39,14 +39,17 @@ class Unit(models.Model):
     #unit_id = models.IntegerField(primary_key=True)
     unit_name = models.CharField(max_length=50)
     unit_description = models.CharField(max_length=1000, null=True, blank=True)
-    unit_capacity = models.IntegerField()
+    unit_capacity = models.IntegerField(default=1)
     max_simultneous_reservations = models.IntegerField(default=1)
-    additional_time = models.DateField(null=True, blank=True)
-    max_count_of_units = models.IntegerField()    
+    additional_time = models.DurationField(null=True, blank=True)
+    max_count_of_units = models.IntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
     unit_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE,null=True)
     # offer_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.unit_name #rewrites Unit object (x) to its name in admin panel
 
 class Reservation(models.Model):
     reservation_from = models.DateTimeField()

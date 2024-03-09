@@ -1,0 +1,46 @@
+{% extends 'main.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container-md">
+    <h1> Offer detail </h1>
+
+    {% if units %}
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Unit name</th>
+                <th scope="col">Offer</th>
+                <th scope="col">Max simultneous reservations</th>
+                <th scope="col">Additional time</th>
+                <th scope="col">Number of units</th>
+                <th scope="col">Created at</th>
+
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for unit in units %}
+            <tr class="clickable-row" style="cursor: pointer;" title="Click to edit unit"
+                onclick="location.href='{% url 'edit_unit' unit.belongs_to_offer.id unit.id %}'">
+
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ unit.unit_name }} </td>
+                <td>{{ unit.belongs_to_offer }} </td>
+                <td>{{ unit.max_simultneous_reservations }} </td>
+                <td>{{ unit.additional_time }} </td>
+                <td>{{ unit.max_count_of_units }} </td>
+                <td>{{ unit.created_at }} </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new unit</a>
+    {% else %}
+    <p>You do not have any units for this offer.<br>
+        <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new unit</a>
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

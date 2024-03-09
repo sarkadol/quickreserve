@@ -40,3 +40,12 @@ class OfferForm(ModelForm):
                 'value': (datetime.now() + timedelta(days=365)).date()})  # now + 1 year
         }
 
+class UnitForm(ModelForm):
+    class Meta: 
+        model=models.Unit
+        exclude = ['belongs_to_offer','created_at'] #limiting the fields if that are displayed
+        widgets = {
+            'additional_time': widgets.DateInput(attrs={
+                'type': 'time'}) # there must be time-duration picker, not time-picker
+        }
+
