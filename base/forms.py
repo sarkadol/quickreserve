@@ -32,7 +32,7 @@ class OfferForm(ModelForm):
         widgets = {
             'available_from': widgets.DateInput(attrs={
                 'type': 'date', 
-                'min': datetime.now().date(),
+                #'min': datetime.now().date(),
                 'value': datetime.now().date()}),
             'available_to': widgets.DateInput(attrs={
                 'type': 'date', 

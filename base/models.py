@@ -22,6 +22,7 @@ class Offer(models.Model):
     available_from = models.DateField(null=True, blank=True)
     available_to = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+    #last_edited_at
     manager_of_this_offer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True )
     def __str__(self):
         return self.offer_name #rewrites Offer object (x) to its name in admi panel
@@ -44,6 +45,8 @@ class Unit(models.Model):
     additional_time = models.DurationField(null=True, blank=True)
     max_count_of_units = models.IntegerField()
     created_at = models.DateTimeField(default=timezone.now)
+    #last_edited_at
+
 
     belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
     unit_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE,null=True)
