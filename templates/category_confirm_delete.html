@@ -3,11 +3,11 @@
 {% block content %}
 
 <div class="container-md">
-    <h2>Delete Unit {{ unit_name }} in offer {{ offer_name }} </h2>
+    <h2>Delete Category {{ category_name }} in offer {{ offer_name }} </h2>
 
     <form method="POST">
         {% csrf_token %}
-        <p>Are you sure that you want to delete the unit "{{unit_name}}"?</p>
+        <p>Are you sure that you want to delete the category "{{category_name}}"?</p>
         <div>
             <button type="submit" class="btn btn-primary">Yes, Delete</button>
 

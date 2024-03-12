@@ -152,6 +152,7 @@ def offer_detail(request,offer_id=None):
 
     return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'categories':categories,'offer_name':offer_name})
 
+@login_required
 def delete_category(request, offer_id=None, category_id=None):
     category = get_object_or_404(Category, pk=category_id)
     offer = get_object_or_404(Offer,pk=category.belongs_to_offer.id)
@@ -163,5 +164,6 @@ def delete_category(request, offer_id=None, category_id=None):
         return render(request, 'category_confirm_delete.html',context)
     elif request.method == 'POST':
         category.delete()
-        messages.success(request,  'The category has been deleted successfully.')
+        success_message = f"Category '{category.category_name}' successfully edited."
+        messages.success(request,  success_message)
         return redirect('/manager_home')
