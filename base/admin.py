@@ -10,6 +10,8 @@ admin.site.register(models.Offer)
 admin.site.register(models.Pricing)
 admin.site.register(models.Reservation)
 admin.site.register(models.Category)
+admin.site.register(models.Unit)
+admin.site.register(models.ReservationSlot)
 
 
 

@@ -9,7 +9,33 @@
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary">Save changes</button>
     </form>
-    <a onclick="location.href='{% url 'delete_category' offer_id category_id %}'" class="btn btn-outline-success" id="addrow">Delete this category</a>
-
+    <a onclick="location.href='{% url 'delete_category' offer_id category_id %}'" class="btn btn-danger"
+        id="addrow">Delete this category</a>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Unit / Time</th>
+                {% for hour in hours %}
+                <th>{{ hour|time:"H" }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for unit in units %}
+            <tr>
+                <td>{{ unit.unit_name }}</td>
+                {% for hour in hours %}
+                <td>
+                    {% for slot in unit.reservation_slots.all %}
+                    {% if slot.start_time <= hour and slot.end_time > hour %}
+                        Reserved
+                        {% endif %}
+                        {% endfor %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

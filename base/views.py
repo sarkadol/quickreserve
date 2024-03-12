@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from django.http import HttpResponse
 from . import models, forms
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Offer, Category
+from .models import Offer, Category, Unit
+
+# https://www.pythontutorial.net/django-tutorial/django-password-reset/ to be done
 
 @login_required # If a user is not logged in, Django will redirect them to the login page.
 def manager_home(request):
@@ -14,6 +16,7 @@ def manager_home(request):
     offers = Offer.objects.filter(manager_of_this_offer=request.user)
     form = forms.ReservationForm()
     categories = Category.objects.all()
+    
     return render(request,'manager_home.html',context={'Users':users,'form':form, 'offers':offers,'categories':categories})
 # v templatu je promenna Users, která má data z users
 
@@ -91,7 +94,7 @@ def create_category(request, offer_id=None):
             success_message = f"Category '{category.category_name}' successfully created in '{offer.offer_name}'"
             messages.success(request, success_message)
 
-            return redirect('/manager_home')  # Redirect to a success page after saving
+            return redirect('/manager_home')  # Redirect to a success page after saving - to do offerdetail
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message) 
@@ -108,6 +111,13 @@ def edit_category(request, offer_id=None, category_id=None):
     categories = Category.objects.filter(belongs_to_offer=offer)
     offer_name=offer.offer_name
 
+
+    units = Unit.objects.filter(belongs_to_category = category)
+    
+    # Assuming you want slots from 00:00 to 23:00, one hour intervals
+    hours = [time(hour=h) for h in range(24)]
+
+
     if request.method == 'POST':
         form = forms.CategoryForm(request.POST, instance=category)
         if form.is_valid():
@@ -123,7 +133,8 @@ def edit_category(request, offer_id=None, category_id=None):
             error_message = "Something went wrong."
             messages.error(request, error_message) 
 
-    return render(request,'edit_category.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'category_name':category.category_name,'category_id':category.id}) 
+    return render(request,'edit_category.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'category_name':category.category_name,'category_id':category.id,'units': units,
+        'hours': hours}) 
         
 @login_required # If a user is not logged in, Django will redirect them to the login page.
 def offer_detail(request,offer_id=None):
@@ -164,6 +175,47 @@ def delete_category(request, offer_id=None, category_id=None):
         return render(request, 'category_confirm_delete.html',context)
     elif request.method == 'POST':
         category.delete()
-        success_message = f"Category '{category.category_name}' successfully edited."
+        success_message = f"Category '{category.category_name}' successfully deleted."
+        messages.success(request,  success_message)
+        return redirect('/manager_home')
+    
+def category_detail(request,category_id=None):
+    category = get_object_or_404(Category, pk=category_id)
+    category_name = category.category_name
+    form = forms.CategoryForm(instance=category)
+    if request.method == 'POST':
+        form = forms.CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.save()
+            success_message = f"Offer '{category.category_name}' successfully edited."
+            messages.success(request, success_message)
+
+            #return redirect('/manager_home')  # Redirect to a success page after saving
+        else:
+            error_message = "Something went wrong."
+            messages.error(request, error_message) 
+
+    #users = models.User.objects.all()
+    #offers = Offer.objects.filter(manager_of_this_offer=request.user)
+    #offer = get_object_or_404(Offer, pk=offer_id)
+
+    form = forms.CategoryForm(instance=category)
+    #categories = Category.objects.filter(belongs_to_offer=offer)
+    #units = Unit.objects.filter(belongs_to_category = category)
+
+    return render(request,'category_detail.html',context={'form':form, 'category_id': category.id,'units':units,'category_name':category_name})
+
+@login_required
+def delete_offer(request, offer_id=None):
+    offer = get_object_or_404(Offer,pk=offer_id)
+    categories = Category.objects.filter(belongs_to_offer=offer)
+    context = {'offer_id':offer_id,'offer_name': offer.offer_name,'categories':categories}    
+    
+    if request.method == 'GET':
+        return render(request, 'offer_confirm_delete.html',context)
+    elif request.method == 'POST':
+        offer.delete()
+        success_message = f"Category '{offer.offer_name}' successfully deleted."
         messages.success(request,  success_message)
         return redirect('/manager_home')

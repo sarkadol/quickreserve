@@ -31,7 +31,7 @@
                 <td>{{ category.belongs_to_offer }} </td>
                 <td>{{ category.max_simultneous_reservations }} </td>
                 <td>{{ category.additional_time }} </td>
-                <td>{{ category.max_count_of_categories }} </td>
+                <td>{{ category.max_count_of_units }} </td>
                 <td>{{ category.created_at }} </td>
             </tr>
             {% endfor %}
@@ -50,7 +50,7 @@
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary">Save changes</button>
     </form>
-    <a href="#" class="btn btn-outline-success" id="addrow">Delete this offer</a>
+    <a onclick="location.href='{% url 'delete_offer' offer_id  %}'" class="btn btn-danger" id="addrow">Delete this offer</a>
 
 </div>
 {% endblock %}

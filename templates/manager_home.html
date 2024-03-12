@@ -49,7 +49,8 @@
                 <th scope="col">Offer</th>
                 <th scope="col">Max simultneous reservations</th>
                 <th scope="col">Additional time</th>
-                <th scope="col">Number of categories</th>
+                <th scope="col">Max number of units</th>
+                <th scope="col">Real number of units</th>
                 <th scope="col">Created at</th>
 
             </tr>
@@ -65,7 +66,8 @@
                 <td>{{ category.belongs_to_offer }} </td>
                 <td>{{ category.max_simultneous_reservations }} </td>
                 <td>{{ category.additional_time }} </td>
-                <td>{{ category.max_count_of_categories }} </td>
+                <td>{{ category.max_count_of_units }} </td>
+                <td>{{ category.get_unit_count }} </td>
                 <td>{{ category.created_at }} </td>
             </tr>
             {% endfor %}
