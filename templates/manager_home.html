@@ -12,6 +12,7 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Offer name</th>
+                <th scope="col">Offer id</th>
                 <th scope="col">Available from</th>
                 <th scope="col">Available to</th>
                 <th scope="col">Created at</th>
@@ -23,6 +24,7 @@
                 style="cursor: pointer;" title="Click to view offer detail">
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ offer.offer_name }} </td>
+                <td>{{ offer.id }} </td>
                 <td>{{ offer.available_from }} </td>
                 <td>{{ offer.available_to }} </td>
                 <td>{{ offer.created_at }} </td>
@@ -69,10 +71,10 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
+    <a onclick="#" class="btn btn-outline-success" id="addrow">Add new unit</a>
     {% else %}
     <p>You do not have any units.<br>
-        <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
+        <a onclick="#" class="btn btn-outline-success" id="addrow">Add new unit</a>
     </p>
     {% endif %}
 

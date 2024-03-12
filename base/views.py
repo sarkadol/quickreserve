@@ -123,7 +123,7 @@ def edit_unit(request, offer_id=None, unit_id=None):
             error_message = "Something went wrong."
             messages.error(request, error_message) 
 
-    return render(request,'edit_unit.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'unit_name':unit.unit_name}) 
+    return render(request,'edit_unit.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'unit_name':unit.unit_name,'unit_id':unit.id}) 
         
 @login_required # If a user is not logged in, Django will redirect them to the login page.
 def offer_detail(request,offer_id=None):
@@ -151,3 +151,17 @@ def offer_detail(request,offer_id=None):
     units = Unit.objects.filter(belongs_to_offer=offer)
 
     return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'units':units,'offer_name':offer_name})
+
+def delete_unit(request, offer_id=None, unit_id=None):
+    unit = get_object_or_404(Unit, pk=unit_id)
+    offer = get_object_or_404(Offer,pk=unit.belongs_to_offer.id)
+    offer_id = offer.id
+    unit_id=unit.id
+    context = {'unit_id': unit_id,'offer_id':offer_id,'offer_name': offer.offer_name,'unit_name':unit.unit_name}    
+    
+    if request.method == 'GET':
+        return render(request, 'unit_confirm_delete.html',context)
+    elif request.method == 'POST':
+        unit.delete()
+        messages.success(request,  'The unit has been deleted successfully.')
+        return redirect('/manager_home')

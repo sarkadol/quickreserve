@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="container-md">
-    <h1> Create unit - belongs to offer named {{ offer_name }} </h1>
+    <h1> Create new unit in offer {{ offer_name }} </h1>
     <form method="post" class="form">
         {% csrf_token %}
         {{ form|crispy }}
