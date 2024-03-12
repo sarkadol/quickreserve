@@ -8,8 +8,9 @@
     <form method="POST">
         {% csrf_token %}
         <p>Are you sure that you want to delete the offer "{{offer_name}}"?</p>
-        <p>This action will also delete categories:</p>
+        
         {% if categories %}
+        <p>This action will also delete categories:</p>
         <ul>
             {% for category in categories %}
             <li>{{ category.category_name }}</li>

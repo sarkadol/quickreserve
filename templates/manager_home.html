@@ -71,7 +71,7 @@
                 <td>{{ category.belongs_to_offer }} </td>
                 <td>{{ category.max_simultneous_reservations }} </td>
                 <td>{{ category.additional_time }} </td>
-                <td>{{ category.max_count_of_units }} </td>
+                <td>{{ category.count_of_units }} </td>
                 <td>{{ category.get_unit_count }} </td>
                 <td>{{ category.created_at }} </td>
                 <td> <button class="btn btn-primary" data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New reservation</button>
@@ -87,11 +87,7 @@
     </p>
     {% endif %}
 
-    <h2>All users</h2>
-    {% for user in Users %}
-    {{user.username}} <br>
-    {% endfor %}
-    <br>
+    
 
 </div>
 

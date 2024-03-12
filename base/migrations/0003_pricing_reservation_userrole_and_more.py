@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name='unit',
             old_name='capacity',
-            new_name='max_count_of_units',
+            new_name='count_of_units',
         ),
         migrations.RemoveField(
             model_name='offer',

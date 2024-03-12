@@ -27,7 +27,6 @@ class ReservationForm(ModelForm):
             "submission_time",
             "belongs_to_offer",
             "belongs_to_category",
-            
         ]  # limiting the fields if that are displayed
 
 
@@ -48,7 +47,14 @@ class OfferForm(ModelForm):
                     #'min': datetime.now().date(),
                     "value": datetime.now().date(),
                 }
-            )
+            ),
+            "available_to": widgets.DateInput(
+                attrs={
+                    "type": "date",
+                    #'min': datetime.now().date(),
+                    "value": datetime.now().date(),
+                }
+            ),
         }
 
 
@@ -64,11 +70,5 @@ class CategoryForm(ModelForm):
             "additional_time": widgets.DateInput(
                 attrs={"type": "time"}
             ),  # here must be time-duration picker, not time-picker
-            "max_count_of_units": widgets.DateInput(
-                attrs={
-                    "type": "date",
-                    "min": datetime.now().date(),
-                    "value": (datetime.now() + timedelta(days=365)).date(),
-                }
-            ),
+            
         }

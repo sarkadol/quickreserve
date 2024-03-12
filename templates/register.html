@@ -2,25 +2,13 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-<div class="container-md">
-    <form method="POST" novalidate>
+<div class="container-md mt-3">
+    <form method="post" class="form">
         {% csrf_token %}
-        <h2>Sign Up</h2>
-
-        {% for field in form %}
-        <p>
-            {% if field.errors %}
-        <ul class="errorlist">
-            {% for error in field.errors %}
-            <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {{ field.label_tag }} {{ field }}
-        </p>
-        {% endfor %}
-        <input type="submit" value="Register" />
-        <p>Already has an account? <a href="{%url 'login' %}">Login</a></p>
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-success">Register</button>
     </form>
+    <p>Already have an account? <a href="{%url 'login' %}">Login</a></p>
 </div>
+
 {% endblock %}

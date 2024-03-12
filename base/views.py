@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404,reverse
 from django.http import HttpResponse
 from . import models, forms
 from datetime import datetime, time, timedelta
@@ -13,7 +13,7 @@ from .models import Offer, Category, Unit
 def manager_home(request):
     # if request.POST: #lze to napsat i třídami s medotou post a get, ne funkcemi, mozna jiny atribut nez method
     # print("POSLANO")
-    users = models.User.objects.all()
+    #users = models.User.objects.all()
     offers = Offer.objects.filter(
         manager_of_this_offer=request.user
     )  # only offers of this user
@@ -28,7 +28,7 @@ def manager_home(request):
         request,
         "manager_home.html",
         context={
-            "Users": users,
+            #"Users": users,
             "form": form,
             "offers": offers,
             "categories": categories,
@@ -54,11 +54,11 @@ def create_offer(request, offer_id=None):
             # Custom validation to check if available_from is before available_to
             available_from = form.cleaned_data["available_from"]
             available_to = form.cleaned_data["available_to"]
-
+            print("je validni")
             if available_from and available_to and available_from >= available_to:
                 error_message = "Available from date must be before available to date."
                 messages.error(request, error_message)
-                return redirect(request, "create_offer.html", context={"form": form})
+                return render(request, "create_offer.html", context={"form": form})
 
             offer.save()  # Save the offer to the database
             offer_id = offer.id
@@ -71,7 +71,6 @@ def create_offer(request, offer_id=None):
                 "offer_detail.html",
                 context={"offer_id": offer_id, "form": form},
             )  # Redirect to a success page after saving
-
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message)
@@ -127,9 +126,8 @@ def create_category(request, offer_id=None):
             success_message = f"Category '{category.category_name}' successfully created in '{offer.offer_name}'"
             messages.success(request, success_message)
 
-            return redirect(
-                "/manager_home"
-            )  # Redirect to a success page after saving - to do offerdetail
+            return redirect(reverse('offer_detail', kwargs={'offer_id': offer_id}))
+  # Redirect to a success page after saving - to do offerdetail
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message)
@@ -255,7 +253,7 @@ def delete_category(request, offer_id=None, category_id=None):
         messages.success(request, success_message)
         return redirect("/manager_home")
 
-
+@login_required
 def category_detail(request, category_id=None):
     category = get_object_or_404(Category, pk=category_id)
     category_name = category.category_name

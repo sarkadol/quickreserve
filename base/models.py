@@ -54,7 +54,7 @@ class Category(models.Model):
     category_capacity = models.IntegerField(default=1)
     max_simultneous_reservations = models.IntegerField(default=1)
     additional_time = models.DurationField(null=True, blank=True)
-    max_count_of_units = models.IntegerField(default=1)
+    count_of_units = models.IntegerField(default=1)
     created_at = models.DateTimeField(default=timezone.now)
     # last_edited_at
 
