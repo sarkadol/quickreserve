@@ -13,7 +13,8 @@ urlpatterns = [
     path('my_schedule',views.my_schedule, name='my_schedule' ),
     path('offer_detail/<int:offer_id>',views.offer_detail, name='offer_detail' ),
     path('delete_category/<int:offer_id>/<int:category_id>', views.delete_category, name='delete_category'),
-    path('delete_offer/<int:offer_id>>', views.delete_offer, name='delete_offer'),
+    path('delete_offer/<int:offer_id>', views.delete_offer, name='delete_offer'),
+    path('new_reservation/<int:offer_id>/<int:category_id>', views.new_reservation, name='new_reservation'),
 
 
     

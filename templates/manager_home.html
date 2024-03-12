@@ -56,11 +56,11 @@
             </tr>
         </thead>
         <tbody>
-            
+
             {% for category in categories %}
             <tr class="clickable-row" style="cursor: pointer;" title="Click to edit category"
-             onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
-                
+                onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
+
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ category.category_name }} </td>
                 <td>{{ category.belongs_to_offer }} </td>
@@ -69,14 +69,16 @@
                 <td>{{ category.max_count_of_units }} </td>
                 <td>{{ category.get_unit_count }} </td>
                 <td>{{ category.created_at }} </td>
+                <td> <button class="btn btn-primary" data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">Reserve this category</button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <a onclick="#" class="btn btn-outline-success" id="addrow">Add new category-nothing</a>
+
     {% else %}
-    <p>You do not have any categories.<br>
-        <a onclick="#" class="btn btn-outline-success" id="addrow">Add new category -nothing</a>
+    <p>You do not have any categories. You can create a new category in offer detail.<br>
+
     </p>
     {% endif %}
 
@@ -87,5 +89,28 @@
     <br>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add click event listeners to all submit buttons within the table
+        document.querySelectorAll('.table .btn-primary').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                // Stop the event from bubbling up to the row
+                event.stopPropagation();
+
+                // Retrieve the offer ID and category ID from the button's data attributes
+                var offerId = this.getAttribute('data-offer-id');
+                var categoryId = this.getAttribute('data-category-id');
+
+                // Construct the URL for the new reservation
+                var url = `/new_reservation/${offerId}/${categoryId}`;
+
+                // Navigate to the constructed URL
+                window.location.href = url;
+            });
+        });
+    });
+</script>
+
 
 {% endblock %}
