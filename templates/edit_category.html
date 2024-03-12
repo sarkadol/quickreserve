@@ -3,13 +3,13 @@
 {% block content %}
 
 <div class="container-md">
-    <h1> Edit unit {{ unit_name }} in offer {{ offer_name }} </h1>
+    <h1> Edit category {{ category_name }} in offer {{ offer_name }} </h1>
     <form method="post" class="form">
         {% csrf_token %}
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary">Save changes</button>
     </form>
-    <a onclick="location.href='{% url 'delete_unit' offer_id unit_id %}'" class="btn btn-outline-success" id="addrow">Delete this unit</a>
+    <a onclick="location.href='{% url 'delete_category' offer_id category_id %}'" class="btn btn-outline-success" id="addrow">Delete this category</a>
 
 </div>
 {% endblock %}

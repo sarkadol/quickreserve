@@ -39,42 +39,42 @@
     </p>
     {% endif %}
 
-    <h2>My units</h2>
-    {% if units %}
+    <h2>My categories</h2>
+    {% if categories %}
     <table class="table table-hover">
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">Unit name</th>
+                <th scope="col">Category name</th>
                 <th scope="col">Offer</th>
                 <th scope="col">Max simultneous reservations</th>
                 <th scope="col">Additional time</th>
-                <th scope="col">Number of units</th>
+                <th scope="col">Number of categories</th>
                 <th scope="col">Created at</th>
 
             </tr>
         </thead>
         <tbody>
             
-            {% for unit in units %}
-            <tr class="clickable-row" style="cursor: pointer;" title="Click to edit unit"
-             onclick="location.href='{% url 'edit_unit' unit.belongs_to_offer.id unit.id %}'">
+            {% for category in categories %}
+            <tr class="clickable-row" style="cursor: pointer;" title="Click to edit category"
+             onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
                 
                 <th scope="row">{{ forloop.counter }}</th>
-                <td>{{ unit.unit_name }} </td>
-                <td>{{ unit.belongs_to_offer }} </td>
-                <td>{{ unit.max_simultneous_reservations }} </td>
-                <td>{{ unit.additional_time }} </td>
-                <td>{{ unit.max_count_of_units }} </td>
-                <td>{{ unit.created_at }} </td>
+                <td>{{ category.category_name }} </td>
+                <td>{{ category.belongs_to_offer }} </td>
+                <td>{{ category.max_simultneous_reservations }} </td>
+                <td>{{ category.additional_time }} </td>
+                <td>{{ category.max_count_of_categories }} </td>
+                <td>{{ category.created_at }} </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <a onclick="#" class="btn btn-outline-success" id="addrow">Add new unit</a>
+    <a onclick="#" class="btn btn-outline-success" id="addrow">Add new category</a>
     {% else %}
-    <p>You do not have any units.<br>
-        <a onclick="#" class="btn btn-outline-success" id="addrow">Add new unit</a>
+    <p>You do not have any categories.<br>
+        <a onclick="#" class="btn btn-outline-success" id="addrow">Add new category</a>
     </p>
     {% endif %}
 

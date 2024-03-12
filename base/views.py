@@ -4,7 +4,7 @@ from . import models, forms
 from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Offer, Unit
+from .models import Offer, Category
 
 @login_required # If a user is not logged in, Django will redirect them to the login page.
 def manager_home(request):
@@ -13,8 +13,8 @@ def manager_home(request):
     users = models.User.objects.all()
     offers = Offer.objects.filter(manager_of_this_offer=request.user)
     form = forms.ReservationForm()
-    units = Unit.objects.all()
-    return render(request,'manager_home.html',context={'Users':users,'form':form, 'offers':offers,'units':units})
+    categories = Category.objects.all()
+    return render(request,'manager_home.html',context={'Users':users,'form':form, 'offers':offers,'categories':categories})
 # v templatu je promenna Users, která má data z users
 
 @login_required 
@@ -76,19 +76,19 @@ def my_schedule(request):
     return render(request,'my_schedule.html') 
 
 @login_required 
-def create_unit(request, offer_id=None):
-    form = forms.UnitForm()
+def create_category(request, offer_id=None):
+    form = forms.CategoryForm()
     offer = get_object_or_404(Offer, pk=offer_id)
     offer_name = offer.offer_name
 
     if request.method == 'POST':
-        form = forms.UnitForm(request.POST)
+        form = forms.CategoryForm(request.POST)
         if form.is_valid():
-            unit = form.save(commit=False) # should not be saved to the database immediately
-            unit.belongs_to_offer = offer
+            category = form.save(commit=False) # should not be saved to the database immediately
+            category.belongs_to_offer = offer
             
-            unit.save() # Save the offer to the database
-            success_message = f"Unit '{unit.unit_name}' successfully created in '{offer.offer_name}'"
+            category.save() # Save the offer to the database
+            success_message = f"Category '{category.category_name}' successfully created in '{offer.offer_name}'"
             messages.success(request, success_message)
 
             return redirect('/manager_home')  # Redirect to a success page after saving
@@ -96,34 +96,34 @@ def create_unit(request, offer_id=None):
             error_message = "Something went wrong."
             messages.error(request, error_message) 
 
-    return render(request,'create_unit.html',context={'form':form,'offer_id': offer_id,'offer_name': offer_name}) 
+    return render(request,'create_category.html',context={'form':form,'offer_id': offer_id,'offer_name': offer_name}) 
 
 @login_required
-def edit_unit(request, offer_id=None, unit_id=None):
+def edit_category(request, offer_id=None, category_id=None):
     current_offer = get_object_or_404(Offer, pk=offer_id)
     current_offer_name = current_offer.offer_name
-    unit = get_object_or_404(Unit, pk=unit_id)
-    form = forms.UnitForm(instance=unit)
-    offer=unit.belongs_to_offer
-    units = Unit.objects.filter(belongs_to_offer=offer)
+    category = get_object_or_404(Category, pk=category_id)
+    form = forms.CategoryForm(instance=category)
+    offer=category.belongs_to_offer
+    categories = Category.objects.filter(belongs_to_offer=offer)
     offer_name=offer.offer_name
 
     if request.method == 'POST':
-        form = forms.UnitForm(request.POST, instance=unit)
+        form = forms.CategoryForm(request.POST, instance=category)
         if form.is_valid():
-            unit = form.save(commit=False)
-            unit.belongs_to_offer = current_offer
-            unit.save()
-            success_message = f"Unit '{unit.unit_name}' successfully edited."
+            category = form.save(commit=False)
+            category.belongs_to_offer = current_offer
+            category.save()
+            success_message = f"Category '{category.category_name}' successfully edited."
             messages.success(request, success_message)
 
-            return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'units':units,'offer_name':offer_name})
+            return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'categories':categories,'offer_name':offer_name})
   # Redirect to a success page after saving
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message) 
 
-    return render(request,'edit_unit.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'unit_name':unit.unit_name,'unit_id':unit.id}) 
+    return render(request,'edit_category.html',context={'form':form,'offer_id': offer_id,'offer_name': current_offer_name,'category_name':category.category_name,'category_id':category.id}) 
         
 @login_required # If a user is not logged in, Django will redirect them to the login page.
 def offer_detail(request,offer_id=None):
@@ -148,20 +148,20 @@ def offer_detail(request,offer_id=None):
     offer = get_object_or_404(Offer, pk=offer_id)
 
     form = forms.OfferForm(instance=offer)
-    units = Unit.objects.filter(belongs_to_offer=offer)
+    categories = Category.objects.filter(belongs_to_offer=offer)
 
-    return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'units':units,'offer_name':offer_name})
+    return render(request,'offer_detail.html',context={'form':form, 'offer_id': offer.id,'categories':categories,'offer_name':offer_name})
 
-def delete_unit(request, offer_id=None, unit_id=None):
-    unit = get_object_or_404(Unit, pk=unit_id)
-    offer = get_object_or_404(Offer,pk=unit.belongs_to_offer.id)
+def delete_category(request, offer_id=None, category_id=None):
+    category = get_object_or_404(Category, pk=category_id)
+    offer = get_object_or_404(Offer,pk=category.belongs_to_offer.id)
     offer_id = offer.id
-    unit_id=unit.id
-    context = {'unit_id': unit_id,'offer_id':offer_id,'offer_name': offer.offer_name,'unit_name':unit.unit_name}    
+    category_id=category.id
+    context = {'category_id': category_id,'offer_id':offer_id,'offer_name': offer.offer_name,'category_name':category.category_name}    
     
     if request.method == 'GET':
-        return render(request, 'unit_confirm_delete.html',context)
+        return render(request, 'category_confirm_delete.html',context)
     elif request.method == 'POST':
-        unit.delete()
-        messages.success(request,  'The unit has been deleted successfully.')
+        category.delete()
+        messages.success(request,  'The category has been deleted successfully.')
         return redirect('/manager_home')

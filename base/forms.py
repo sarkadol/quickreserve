@@ -17,8 +17,8 @@ class ReservationForm(ModelForm):
             'customer': widgets.TextInput(attrs={ # here would be probably problems as customer is dromdown menu 
                 'value':'novy_uzivatel'
             }),
-            'reserved_unit': widgets.TextInput(attrs={ #same here
-                'value':'Unit object (1)'
+            'reserved_category': widgets.TextInput(attrs={ #same here
+                'value':'Category object (1)'
             })    
         }
         exclude = ['confirmed_by_manager'] #limiting the fields if that are displayed
@@ -40,10 +40,10 @@ class OfferForm(ModelForm):
                 'value': (datetime.now() + timedelta(days=365)).date()})  # now + 1 year
         }
 
-class UnitForm(ModelForm):
+class CategoryForm(ModelForm):
     class Meta: 
-        model=models.Unit
-        exclude = ['belongs_to_offer','created_at','unit_pricing'] #limiting the fields if that are displayed
+        model=models.Category
+        exclude = ['belongs_to_offer','created_at','category_pricing'] #limiting the fields if that are displayed
         widgets = {
             'additional_time': widgets.DateInput(attrs={
                 'type': 'time'}) # there must be time-duration picker, not time-picker
