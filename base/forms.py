@@ -20,9 +20,15 @@ class ReservationForm(ModelForm):
                     "min": datetime.now().date(),
                     "value": datetime.now().date(),
                 }
-            )
+            ),
         }
-        exclude = ["confirmed_by_manager","submission_time"]  # limiting the fields if that are displayed
+        exclude = [
+            "confirmed_by_manager",
+            "submission_time",
+            "belongs_to_offer",
+            "belongs_to_category",
+            
+        ]  # limiting the fields if that are displayed
 
 
 # class ReservationUpdateForm - to be done

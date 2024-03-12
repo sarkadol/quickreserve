@@ -7,6 +7,8 @@
     <h1> Manager home </h1>
     <h2>My offers</h2>
     {% if offers %}
+    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+
     <table class="table table-hover">
         <thead>
             <tr>
@@ -32,6 +34,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
     {% else %}
     <p>You do not have any offers.<br>
@@ -41,6 +44,7 @@
 
     <h2>My categories</h2>
     {% if categories %}
+    
     <table class="table table-hover">
         <thead>
             <tr>
@@ -52,6 +56,7 @@
                 <th scope="col">Max number of units</th>
                 <th scope="col">Real number of units</th>
                 <th scope="col">Created at</th>
+                <th scope="col"> </th>
 
             </tr>
         </thead>
@@ -69,7 +74,7 @@
                 <td>{{ category.max_count_of_units }} </td>
                 <td>{{ category.get_unit_count }} </td>
                 <td>{{ category.created_at }} </td>
-                <td> <button class="btn btn-primary" data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">Reserve this category</button>
+                <td> <button class="btn btn-primary" data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New reservation</button>
                 </td>
             </tr>
             {% endfor %}

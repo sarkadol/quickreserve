@@ -114,7 +114,7 @@ class Reservation(models.Model):
 
     submission_time = models.DateTimeField(
         default=timezone.now
-    )  # THIS NEED DEFAULT VALUE!
+    )  
     confirmed_by_manager = models.CharField(
         max_length=1,
         choices=[("A", "Confirmed"), ("N", "Not Confirmed")],
@@ -122,5 +122,10 @@ class Reservation(models.Model):
         blank=True,
     )
 
-    # customer = models.ForeignKey(User, on_delete=models.CASCADE) #just for now so I can test it
-    # reserved_category = models.ForeignKey(Category, on_delete=models.CASCADE) #just for now so I can test it
+    #customer = models.ForeignKey(User, on_delete=models.CASCADE) #just for now so I can test it
+    customer_email = models.CharField(max_length=20,default="email")
+    belongs_to_category = models.ForeignKey(Category, on_delete=models.CASCADE) #just for now so I can test it
+    belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
+
+    #def __str__(self):
+    #    return self.unit_name

@@ -80,26 +80,28 @@ def create_offer(request, offer_id=None):
 
 
 def new_reservation(request, offer_id=None, category_id=None):
-    users = models.User.objects.all()
+    # users = models.User.objects.all()
     form = forms.ReservationForm()
-    
+    category_name = get_object_or_404(Category, pk=category_id).category_name
+
     if request.POST:
-        #success_message = "Je to post."
-        #messages.success(request, success_message)
+        form = forms.ReservationForm(request.POST)
+
+        reservation = form.save(commit=False)
+        reservation.belongs_to_category = get_object_or_404(Category, pk=category_id)
+        reservation.belongs_to_offer = get_object_or_404(Offer, pk=offer_id)
+        #category_name = reservation.belongs_to_category.category_name
 
         if form.is_valid():
-            reservation = form.save(commit=False)
-            #reservation.customer = request.
-            #here add already existing user, cat and offer
 
-            #and then create a reservation slot
+            # and then create a reservation slot
             success_message = "Reservation successfully created."
             messages.success(request, success_message)
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message)
 
-    return render(request, "new_reservation.html", context={"form": form})
+    return render(request, "new_reservation.html", context={"form": form, "category_name":category_name})
 
 
 @login_required
