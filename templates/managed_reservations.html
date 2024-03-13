@@ -1,0 +1,43 @@
+{% extends 'main.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="container-md">
+    <h1>Managed Reservations</h1>
+    
+    {% if reservations %}
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">ID</th>
+                <th scope="col">Category Name</th>
+                <th scope="col">Offer Name</th>
+                <th scope="col">Reservation From</th>
+                <th scope="col">Reservation To</th>
+                <th scope="col">Customer Email</th>
+                <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reservation in reservations %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ reservation.id }}</td>
+                <td>{{ reservation.belongs_to_category.category_name }}</td>
+                <td>{{ reservation.belongs_to_category.belongs_to_offer.offer_name }}</td>
+                <td>{{ reservation.reservation_from }}</td>
+                <td>{{ reservation.reservation_to }}</td>
+                <td>{{ reservation.customer_email }}</td>
+                <td>{{ reservation.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No reservations found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
