@@ -8,6 +8,18 @@
     <form method="POST">
         {% csrf_token %}
         <p>Are you sure that you want to delete the category "{{category_name}}"?</p>
+        {% if reservations %}
+        <p>This action will also delete reservations:</p>
+        <ul>
+            {% for reservation in reservations %}
+            <li>Reservation for '{{ reservation.belongs_to_category }}' from {{ reservation.reservation_from }} to
+                {{reservation.reservation_to }}
+                made by '{{reservation.customer_email}}'</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No reservations associated with this offer.</p>
+        {% endif %}
         <div>
             <button type="submit" class="btn btn-danger">Yes, Delete</button>
 

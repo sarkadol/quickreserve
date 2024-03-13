@@ -105,27 +105,34 @@ class ReservationSlot(models.Model):
     )
 
 
+
 class Reservation(models.Model):
-    reservation_from = models.DateTimeField()
-    reservation_to = models.DateTimeField(null=True, blank=True)
-    # time_of_reservation = models.DateField() #when was the reservation created
-
-    # slot = models.ForeignKey(ReservationSlot, related_name='reservations', on_delete=models.CASCADE)
-
-    submission_time = models.DateTimeField(
-        default=timezone.now
-    )  
+    reservation_from = models.DateTimeField(help_text="Start time/date of the reservation")
+    reservation_to = models.DateTimeField(null=True, blank=True, help_text="End time/date of the reservation")
+    submission_time = models.DateTimeField(default=timezone.now, help_text="When the reservation was submitted")
     confirmed_by_manager = models.CharField(
         max_length=1,
         choices=[("A", "Confirmed"), ("N", "Not Confirmed")],
         null=True,
         blank=True,
+        help_text="Whether the reservation is confirmed by a manager"
+    )
+    customer_email = models.CharField(max_length=255, default="email@example.com", help_text="Customer email for reservation communication")
+    belongs_to_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='reservations', help_text="The category of the unit being reserved")
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("confirmed", "Confirmed"),
+            ("cancelled", "Cancelled"),
+            ("completed", "Completed"),
+        ],
+        default="pending",
+        help_text="The current status of the reservation"
     )
 
-    #customer = models.ForeignKey(User, on_delete=models.CASCADE) #just for now so I can test it
-    customer_email = models.CharField(max_length=20,default="email")
-    belongs_to_category = models.ForeignKey(Category, on_delete=models.CASCADE) #just for now so I can test it
-    belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"Reservation for {self.belongs_to_category} from {self.reservation_from} to {self.reservation_to}"
 
-    #def __str__(self):
-    #    return self.unit_name
+    class Meta:
+        ordering = ['reservation_from'] # Reservations ordered in ascending order (earliest first)

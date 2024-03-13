@@ -4,7 +4,8 @@ from . import models, forms
 from datetime import datetime, time, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Offer, Category, Unit
+from django.utils import timezone
+from .models import Offer, Category, Unit, Reservation
 
 # https://www.pythontutorial.net/django-tutorial/django-password-reset/ to be done
 
@@ -79,29 +80,47 @@ def create_offer(request, offer_id=None):
 
 
 def new_reservation(request, offer_id=None, category_id=None):
-    # users = models.User.objects.all()
+    category = get_object_or_404(Category, pk=category_id)
+    offer = get_object_or_404(Offer, pk=offer_id)
     form = forms.ReservationForm()
-    category_name = get_object_or_404(Category, pk=category_id).category_name
 
-    if request.POST:
+    if request.method == 'POST':
         form = forms.ReservationForm(request.POST)
-
-        reservation = form.save(commit=False)
-        reservation.belongs_to_category = get_object_or_404(Category, pk=category_id)
-        reservation.belongs_to_offer = get_object_or_404(Offer, pk=offer_id)
-        #category_name = reservation.belongs_to_category.category_name
-
         if form.is_valid():
+            reservation = form.save(commit=False)
+            reservation.belongs_to_category = category
+            reservation.belongs_to_offer = offer
+            
+            # Combine the separate date and time inputs into datetime objects
+            date_from = form.cleaned_data['reservation_date_from']
+            time_from = form.cleaned_data['reservation_time_from']
+            reservation.reservation_from = datetime.combine(date_from, time_from)
 
-            # and then create a reservation slot
-            success_message = "Reservation successfully created."
-            messages.success(request, success_message)
+            date_to = form.cleaned_data.get('reservation_date_to')
+            time_to = form.cleaned_data.get('reservation_time_to')
+            if date_to and time_to:
+                reservation.reservation_to = datetime.combine(date_to, time_to)
+            
+            # Assuming you have set timezone in your settings.py
+            # This ensures the datetime objects are timezone aware
+            reservation.reservation_from = timezone.make_aware(reservation.reservation_from)
+            if reservation.reservation_to:
+                reservation.reservation_to = timezone.make_aware(reservation.reservation_to)
+
+            reservation.save()
+            messages.success(request, "Reservation successfully created.")
+            # Redirect to a new URL:
+            return redirect('/manager_home')  # Update 'some_success_url' with your actual URL name
         else:
-            error_message = "Something went wrong."
-            messages.error(request, error_message)
+            messages.error(request, "Something went wrong.")
 
-    return render(request, "new_reservation.html", context={"form": form, "category_name":category_name})
-
+    context = {
+        "form": form,
+        "category_name": category.category_name,
+        "offer_id": offer_id,  # Include offer_id in context if needed in your template
+        "category_id": category_id,  # Include category_id in context if needed in your template
+    }
+    return render(request, "new_reservation.html", context)
 
 @login_required
 def my_schedule(request):
@@ -238,11 +257,19 @@ def delete_category(request, offer_id=None, category_id=None):
     offer = get_object_or_404(Offer, pk=category.belongs_to_offer.id)
     offer_id = offer.id
     category_id = category.id
+
+    reservations = Reservation.objects.filter(belongs_to_category=category)
+    #reservation_names = ", ".join([reservation.reservation_name for reservation in reservations])
+
+    #categories = Category.objects.filter(belongs_to_offer=offer)
+    #categories_names = ", ".join([category.category_name for category in categories])
     context = {
         "category_id": category_id,
         "offer_id": offer_id,
         "offer_name": offer.offer_name,
         "category_name": category.category_name,
+        "reservations":reservations,
+        #"reservation_names":reservation_names
     }
 
     if request.method == "GET":
