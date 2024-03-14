@@ -17,7 +17,7 @@
                 <th scope="col">Reservation From</th>
                 <th scope="col">Reservation To</th>
                 <th scope="col">Customer Email</th>
-                <th scope="col">Status</th>
+                <th scope="col">Created at</th>
             </tr>
         </thead>
         <tbody>
@@ -30,7 +30,7 @@
                 <td>{{ reservation.reservation_from }}</td>
                 <td>{{ reservation.reservation_to }}</td>
                 <td>{{ reservation.customer_email }}</td>
-                <td>{{ reservation.status }}</td>
+                <td>{{ reservation.submission_time}}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
 
 # Create your models here.
 
@@ -93,7 +94,9 @@ class ReservationSlot(models.Model):
         Unit, related_name="reservation_slots", on_delete=models.CASCADE
     )
     start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    
+    duration = models.DurationField(default=timedelta(minutes=30))
+
     # Consider including a status field as suggested previously
     status = models.CharField(
         max_length=20,
@@ -103,8 +106,6 @@ class ReservationSlot(models.Model):
             ("maintenance", "Maintenance"),
         ],
     )
-
-
 
 class Reservation(models.Model):
     reservation_from = models.DateTimeField(help_text="Start time/date of the reservation")
@@ -135,4 +136,4 @@ class Reservation(models.Model):
         return f"Reservation for {self.belongs_to_category} from {self.reservation_from} to {self.reservation_to}"
 
     class Meta:
-        ordering = ['reservation_from'] # Reservations ordered in ascending order (earliest first)
+        ordering = ['submission_time'] # Reservations ordered in ascending order (earliest first)

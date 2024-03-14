@@ -86,7 +86,7 @@ class OfferForm(ModelForm):
                 attrs={
                     "type": "date",
                     #'min': datetime.now().date(),
-                    "value": datetime.now().date(),
+                    "value": datetime.now().date()+ timedelta(days=1),
                 }
             ),
         }

@@ -79,93 +79,6 @@ def create_offer(request, offer_id=None):
     return render(request, "create_offer.html", context={"form": form})
 
 
-def new_reservation(request, offer_id=None, category_id=None):
-    category = get_object_or_404(Category, pk=category_id)
-    offer = get_object_or_404(Offer, pk=offer_id)
-    form = forms.ReservationForm()
-
-    if request.method == "POST":
-        form = forms.ReservationForm(request.POST)
-        if form.is_valid():
-            date_from = form.cleaned_data["reservation_date_from"]
-            time_from = form.cleaned_data["reservation_time_from"]
-            date_to = form.cleaned_data.get("reservation_date_to")
-            time_to = form.cleaned_data.get("reservation_time_to")
-
-            reservation_from = timezone.make_aware(
-                datetime.combine(date_from, time_from)
-            )
-            reservation_to = (
-                timezone.make_aware(datetime.combine(date_to, time_to))
-                if date_to and time_to
-                else None
-            )
-
-            # Validate against category availability and existing reservations
-            if not (
-                time(8, 0) <= reservation_from.time() <= time(18, 0)
-                and (
-                    reservation_to is None
-                    or time(8, 0) <= reservation_to.time() <= time(18, 0)
-                )
-            ):
-                messages.error(
-                    request,
-                    "Reservation time must be within the category's available hours (8 AM to 18 PM).",
-                )
-                return render(
-                    request,
-                    "new_reservation.html",
-                    context={
-                        "form": form,
-                        "category_name": category.category_name,
-                        "offer_id": offer_id,
-                        "category_id": category_id,
-                    },
-                )
-
-            conflicting_reservations = Reservation.objects.filter(
-                belongs_to_category=category,
-                reservation_from__lt=reservation_to,
-                reservation_to__gt=reservation_from,
-            )
-            if conflicting_reservations.exists():
-                messages.error(
-                    request,
-                    "This slot is already booked. Please choose a different time.",
-                )
-                return render(
-                    request,
-                    "new_reservation.html",
-                    context={
-                        "form": form,
-                        "category_name": category.category_name,
-                        "offer_id": offer_id,
-                        "category_id": category_id,
-                    },
-                )
-
-            # Save the reservation if it passes the checks
-            reservation = form.save(commit=False)
-            reservation.belongs_to_category = category
-            reservation.belongs_to_offer = offer
-            reservation.reservation_from = reservation_from
-            reservation.reservation_to = reservation_to
-            reservation.save()
-            messages.success(request, "Reservation successfully created.")
-            return redirect("/manager_home")
-        else:
-            messages.error(request, "Something went wrong.")
-
-    context = {
-        "form": form,
-        "category_name": category.category_name,
-        "offer_id": offer_id,
-        "category_id": category_id,
-    }
-    return render(request, "new_reservation.html", context)
-
-
 @login_required
 def my_schedule(request):
     return render(request, "my_schedule.html")
@@ -431,6 +344,99 @@ def managed_reservations(request):
     )
 
 
+def new_reservation(request, offer_id=None, category_id=None):
+    category = get_object_or_404(Category, pk=category_id)
+    offer = get_object_or_404(Offer, pk=offer_id)
+    form = forms.ReservationForm()
+
+    if request.method == "POST":
+        form = forms.ReservationForm(request.POST)
+        if form.is_valid():
+            reservation = form.save(commit=False)
+            date_from = form.cleaned_data["reservation_date_from"]
+            time_from = form.cleaned_data["reservation_time_from"]
+            date_to = form.cleaned_data.get("reservation_date_to")
+            time_to = form.cleaned_data.get("reservation_time_to")
+
+            reservation_from = timezone.make_aware(
+                datetime.combine(date_from, time_from)
+            )
+            reservation_to = (
+                timezone.make_aware(datetime.combine(date_to, time_to))
+                if date_to and time_to
+                else None
+            )
+
+            # Validate against category availability and existing reservations
+            """if not (
+                time(8, 0) <= reservation_from.time() <= time(18, 0)
+                and (
+                    reservation_to is None
+                    or time(8, 0) <= reservation_to.time() <= time(18, 0)
+                )
+            ):
+                messages.error(
+                    request,
+                    "Reservation time must be within the category's available hours (8 AM to 18 PM).",
+                )
+                return render(
+                    request,
+                    "new_reservation.html",
+                    context={
+                        "form": form,
+                        "category_name": category.category_name,
+                        "offer_id": offer_id,
+                        "category_id": category_id,
+                    },
+                )
+"""
+            conflicting_reservations = Reservation.objects.filter(
+                belongs_to_category=category,
+                reservation_from__lt=reservation_to,
+                reservation_to__gt=reservation_from,
+            )
+            if conflicting_reservations.exists():
+                messages.error(
+                    request,
+                    "This slot is already booked. Please choose a different time.",
+                )
+                return render(
+                    request,
+                    "new_reservation.html",
+                    context={
+                        "form": form,
+                        "category_name": category.category_name,
+                        "offer_id": offer_id,
+                        "category_id": category_id,
+                    },
+                )
+
+            # Save the reservation if it passes the checks
+
+            reservation.belongs_to_category = category
+            reservation.belongs_to_offer = offer
+            reservation.reservation_from = reservation_from
+            reservation.reservation_to = reservation_to
+            reservation.save()
+
+            create_unit(reservation)
+            create_reservation_slot(reservation)
+            
+
+            messages.success(request, "Reservation successfully created.")
+            return redirect("/manager_home")
+        else:
+            messages.error(request, "Something went wrong.")
+
+    context = {
+        "form": form,
+        "category_name": category.category_name,
+        "offer_id": offer_id,
+        "category_id": category_id,
+    }
+    return render(request, "new_reservation.html", context)
+
+
 def get_available_slots(date, category_id):
     # Assuming each slot is 1 hour and category "tennis court" has daily availability from 8 AM to 18 PM
     start_time = time(8, 0)
@@ -458,3 +464,87 @@ def get_available_slots(date, category_id):
         current_time += slot_duration
 
     return available_slots
+
+
+def create_reservation_slot(reservation):
+    # Assuming each unit within a category has a similar schedule and can have overlapping reservations.
+    category_units = reservation.belongs_to_category.unit_set.all()
+    print("category units: ",category_units)
+    # Find if there's a unit with an available slot for the reservation.
+    for unit in category_units:
+        slots = models.ReservationSlot.objects.filter(unit=unit, 
+                                               start_time__lte=reservation.reservation_from, 
+                                               status="available").order_by('start_time')
+        print("slots: ",slots)
+        if slots.exists():
+            for slot in slots:
+                # Calculate the proposed end time based on the slot's start time and duration.
+                proposed_end_time = slot.start_time + timedelta(minutes=slot.duration)
+                
+                # Check if the reservation fits in the slot without overlapping with the next slot.
+                next_slot = slots.filter(start_time__gt=slot.start_time).first()
+                if next_slot:
+                    if reservation.reservation_from >= slot.start_time and reservation.reservation_to <= proposed_end_time and reservation.reservation_to <= next_slot.start_time:
+                        # The reservation fits within this slot.
+                        # Update the slot status to "reserved" and associate it with the reservation.
+                        slot.status = "reserved"
+                        slot.save()
+                        print("A")
+                        #return True
+                else:
+                    # No next slot, just check if it fits within the current slot's duration.
+                    if reservation.reservation_from >= slot.start_time and reservation.reservation_to <= proposed_end_time:
+                        # The reservation fits in this slot.
+                        slot.status = "reserved"
+                        slot.save()
+                        print("B")
+                    # return True
+        # there are no slots yet
+        else:
+            # Calculate total required slots to cover the reservation
+            slot_duration = timedelta(minutes=30)
+            reservation_duration = reservation.reservation_to - reservation.reservation_from
+            total_required_slots = int(reservation_duration / slot_duration)
+            # If there are no existing slots, start creating new slots
+            start_time = reservation.reservation_from
+            for _ in range(total_required_slots):
+                end_time = start_time + slot_duration
+                new_slot = models.ReservationSlot(unit=unit, start_time=start_time, duration=timedelta(minutes=slot_duration.seconds // 60), status="reserved")
+                new_slot.save()
+                # Update start time for the next slot
+                start_time = end_time
+                
+            print("Slots created to cover the reservation.")                
+        #create as many slots as needed to cover the reservation time                
+    
+    # No suitable slot found or all slots are full/overlapping.
+    #return False
+    
+
+
+def unit_exist(reservation):
+    # if there is a unit this reservation and has slots in this day return true
+    # so in another function it will be necessary to check if the times collide
+    # else return false
+    #
+    pass
+
+
+def assign_reservation():
+    pass
+
+
+def create_unit(reservation):
+    category = reservation.belongs_to_category
+    if(category.get_unit_count()<category.count_of_units):
+        unit = Unit.objects.create(
+            unit_name="z23",  # Provide the unit name here - to be done
+            belongs_to_category=category,  # Assign the category instance
+        )
+        unit.save()
+        print("unit created")#to be done - messages
+    else:
+        print("max units reached") #to be done - messages
+
+
+    
