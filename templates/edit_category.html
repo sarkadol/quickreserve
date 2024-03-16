@@ -1,5 +1,6 @@
 {% extends 'main.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% block content %}
 
 <div class="container-md">
@@ -11,6 +12,10 @@
     </form>
     <a onclick="location.href='{% url 'delete_category' offer_id category_id %}'" class="btn btn-danger"
         id="addrow">Delete this category</a>
+        <form method="get" action="">
+            <input type="date" name="selected_date" required>
+            <button type="submit">Show Availability</button>
+        </form>
     <table class="table table-hover">
         <thead>
             <tr>
@@ -47,4 +52,5 @@
         </tbody>
     </table>
 </div>
+<script src="{% static 'date_based_reservation' %}"></script>
 {% endblock %}

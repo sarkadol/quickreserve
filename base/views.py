@@ -6,6 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import Offer, Category, Unit, Reservation
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 # https://www.pythontutorial.net/django-tutorial/django-password-reset/ to be done
 
@@ -127,7 +129,6 @@ def edit_category(request, offer_id=None, category_id=None):
 
     units = Unit.objects.filter(belongs_to_category=category)
 
-    category = get_object_or_404(Category, pk=category_id)
     # Ensure the current user is the manager
     if category.belongs_to_offer.manager_of_this_offer != request.user:
         messages.error(request, "You are not authorized to edit this category.")
@@ -161,6 +162,19 @@ def edit_category(request, offer_id=None, category_id=None):
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message)
+
+ # Handling the AJAX request for date selection
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        selected_date = request.GET.get('selected_date')
+        # Here, adjust your query to filter units or reservations based on the selected date
+        
+        # Render only the table part using a separate template or a dynamically built HTML string
+        html = render_to_string('reservations_table.html', {
+            'units': units,
+            'hours': hours,
+        }, request=request)
+        
+        return JsonResponse({'html': html})
 
     return render(
         request,
@@ -519,8 +533,6 @@ def create_reservation_slot(reservation):
     
     # No suitable slot found or all slots are full/overlapping.
     #return False
-    
-
 
 def unit_exist(reservation):
     # if there is a unit this reservation and has slots in this day return true
@@ -546,5 +558,7 @@ def create_unit(reservation):
     else:
         print("max units reached") #to be done - messages
 
-
+def check_category_availability():
+    pass
+    #return true/false?
     
