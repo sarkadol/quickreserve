@@ -13,23 +13,20 @@
                 <th scope="col">#</th>
                 <th scope="col">Category name</th>
                 <th scope="col">Offer</th>
-                <th scope="col">Max simultneous reservations</th>
+                <th scope="col">Max simultaneous reservations</th>
                 <th scope="col">Additional time</th>
                 <th scope="col">Number of categories</th>
                 <th scope="col">Created at</th>
-
             </tr>
         </thead>
         <tbody>
-
             {% for category in categories %}
             <tr class="clickable-row" style="cursor: pointer;" title="Click to edit category"
                 onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
-
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ category.category_name }} </td>
                 <td>{{ category.belongs_to_offer }} </td>
-                <td>{{ category.max_simultneous_reservations }} </td>
+                <td>{{ category.max_simultaneous_reservations }} </td>
                 <td>{{ category.additional_time }} </td>
                 <td>{{ category.count_of_units }} </td>
                 <td>{{ category.created_at }} </td>
@@ -50,7 +47,44 @@
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary">Save changes</button>
     </form>
-    <a onclick="location.href='{% url 'delete_offer' offer_id  %}'" class="btn btn-danger" id="addrow">Delete this offer</a>
 
+    <!-- Modified Delete Button to Trigger Modal -->
+    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteOfferModal">
+      Delete this offer
+    </button>
 </div>
+
+<!-- Bootstrap Modal for Delete Confirmation -->
+<div class="modal fade" id="deleteOfferModal" tabindex="-1" aria-labelledby="deleteOfferModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteOfferModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'delete_offer' offer_id %}">
+            {% csrf_token %}
+            <p>Are you sure you want to delete the offer "{{offer_name}}"?</p>
+
+            {% if categories %}
+            <p>This action will also delete categories:</p>
+            <ul>
+                {% for category in categories %}
+                <li>{{ category.category_name }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No categories associated with this offer.</p>
+            {% endif %}
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, back</button>
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

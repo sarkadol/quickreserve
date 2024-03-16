@@ -45,6 +45,9 @@ INSTALLED_APPS = [
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 LOGIN_URL = 'login'
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
