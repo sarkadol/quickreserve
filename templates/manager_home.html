@@ -1,5 +1,6 @@
 {% extends 'main.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block content %}
 
@@ -9,33 +10,33 @@
     {% if offers %}
     <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
 
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th scope="col">#</th>
-                <th scope="col">Offer name</th>
-                <th scope="col">Offer id</th>
-                <th scope="col">Available from</th>
-                <th scope="col">Available to</th>
-                <th scope="col">Created at</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for offer in offers %}
-            <tr class="clickable-row" onclick="location.href='{% url 'offer_detail' offer.id %}'"
-                style="cursor: pointer;" title="Click to view offer detail">
-                <th scope="row">{{ forloop.counter }}</th>
-                <td>{{ offer.offer_name }} </td>
-                <td>{{ offer.id }} </td>
-                <td>{{ offer.available_from }} </td>
-                <td>{{ offer.available_to }} </td>
-                <td>{{ offer.created_at }} </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Offer name</th>
+                    <th scope="col">Offer id</th>
+                    <th scope="col">Available from</th>
+                    <th scope="col">Available to</th>
+                    <th scope="col">Created at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                <tr class="clickable-row" onclick="location.href='{% url 'offer_detail' offer.id %}'"
+                    style="cursor: pointer;" title="Click to view offer detail">
+                    <th scope="row">{{ forloop.counter }}</th>
+                    <td>{{ offer.offer_name }} </td>
+                    <td>{{ offer.id }} </td>
+                    <td>{{ offer.available_from }} </td>
+                    <td>{{ offer.available_to }} </td>
+                    <td>{{ offer.created_at }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
+    <a href="{% url 'create_offer' %}" class="btn btn-outline-success " id="addrow">Add new offer</a>
     {% else %}
     <p>You do not have any offers.<br>
         <a href="{% url 'create_offer' %}" class="btn btn-outline-success" id="addrow">Add new offer</a>
@@ -44,7 +45,7 @@
 
     <h2>My categories</h2>
     {% if categories %}
-    
+
     <table class="table table-hover">
         <thead>
             <tr>
@@ -74,7 +75,13 @@
                 <td>{{ category.count_of_units }} </td>
                 <td>{{ category.get_unit_count }} </td>
                 <td>{{ category.created_at }} </td>
-                <td> <button class="btn btn-primary" data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New reservation</button>
+                <td> <button class="btn btn-primary btn-reservation-form"
+                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">Res
+                        form</button>
+                <td> <button class="btn btn-primary btn-reservation-calendar"
+                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New
+                        reservation timetable</button>
+
                 </td>
             </tr>
             {% endfor %}
@@ -87,31 +94,8 @@
     </p>
     {% endif %}
 
-    
+
+    <script src="{% static 'js/date_based_reservation.js' %}"></script>
 
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Add click event listeners to all submit buttons within the table
-        document.querySelectorAll('.table .btn-primary').forEach(function (button) {
-            button.addEventListener('click', function (event) {
-                // Stop the event from bubbling up to the row
-                event.stopPropagation();
-
-                // Retrieve the offer ID and category ID from the button's data attributes
-                var offerId = this.getAttribute('data-offer-id');
-                var categoryId = this.getAttribute('data-category-id');
-
-                // Construct the URL for the new reservation
-                var url = `/new_reservation/${offerId}/${categoryId}`;
-
-                // Navigate to the constructed URL
-                window.location.href = url;
-            });
-        });
-    });
-</script>
-
-
 {% endblock %}

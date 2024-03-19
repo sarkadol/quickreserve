@@ -13,14 +13,12 @@
     <a onclick="location.href='{% url 'delete_category' offer_id category_id %}'" class="btn btn-danger"
         id="addrow">Delete this category</a>
 
-    <form method="get" action="" id="date-form">
-        <input type="date" name="selected_date" required>
-        <button type="submit">Show Availability</button>
-    </form>
-    <div id="reservation-table">
-        <!-- Dynamic content from reservations_table.html will be loaded here -->
-    </div>
+    
+    
+    <script src="{% static 'js/date_based_reservation.js' %}"></script>
+    
 
 </div>
-<script src="{% static 'date_based_reservation.js' %}"></script>
+
+
 {% endblock %}
