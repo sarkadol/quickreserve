@@ -17,7 +17,6 @@ urlpatterns = [
     path('new_reservation_timetable/<int:offer_id>/<int:category_id>', views.new_reservation_timetable, name='new_reservation_timetable'),
     path('new_reservation/<int:offer_id>/<int:category_id>', views.new_reservation, name='new_reservation'),
     path('new_reservation',views.new_reservation, name='new_reservation' ),
-    
     path('managed_reservations',views.managed_reservations, name='managed_reservations' ),
 
     

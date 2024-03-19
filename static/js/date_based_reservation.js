@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let htmlWithoutNewlines = data.html.replace(/\n/g, ''); // Remove newlines
                 //console.log('After replace:', htmlWithoutNewlines); // Log the HTML after replace
                 document.getElementById('reservation-table').innerHTML = htmlWithoutNewlines;
+                attachClickableCellListeners();
             })
             .catch(error => console.error('Error loading the table:', error));
         });
@@ -81,3 +82,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });    
+
+
+function attachClickableCellListeners() {
+    document.querySelectorAll('.clickable-cell').forEach(function(cell) {
+        cell.addEventListener('click', function() {
+            // Click handling logic here
+            var unitId = this.getAttribute('data-unit-id');
+            var hour = this.getAttribute('data-hour');
+            console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('reservation-table');
+    if (table) {
+        table.addEventListener('click', function(event) {
+            const cell = event.target.closest('.clickable-cell');
+            if (cell) {
+                // Change the background color of the clicked cell
+                cell.style.backgroundColor = '#ccffcc'; // Example color: light red
+
+                // Your existing click handling logic here
+                var unitId = cell.getAttribute('data-unit-id');
+                var hour = cell.getAttribute('data-hour');
+                console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
+            }
+        });
+    }
+});
