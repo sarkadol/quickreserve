@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var selectedDate = this.elements['selected_date'].value;
             console.log("Selected date:", selectedDate); // Log the selected date
 
-            fetch('?selected_date=${selectedDate}', {
+            fetch(`?selected_date=${selectedDate}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 }
@@ -83,14 +83,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });    
 
-
 function attachClickableCellListeners() {
     document.querySelectorAll('.clickable-cell').forEach(function(cell) {
         cell.addEventListener('click', function() {
             // Click handling logic here
             var unitId = this.getAttribute('data-unit-id');
             var hour = this.getAttribute('data-hour');
-            console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
+            //console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
         });
     });
 }
@@ -101,8 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
         table.addEventListener('click', function(event) {
             const cell = event.target.closest('.clickable-cell');
             if (cell) {
-                // Change the background color of the clicked cell
-                cell.style.backgroundColor = '#ccffcc'; // Example color: light red
+                // Toggle the background color of the clicked cell
+                if (cell.style.backgroundColor === 'rgb(204, 255, 204)') { // Checking if it's already green
+                    cell.style.backgroundColor = ''; // Removing the color
+                } else {
+                    cell.style.backgroundColor = '#ccffcc'; // Setting to green if not already
+                }
 
                 // Your existing click handling logic here
                 var unitId = cell.getAttribute('data-unit-id');

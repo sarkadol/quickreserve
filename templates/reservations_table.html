@@ -10,8 +10,8 @@
             {% endfor %}
         </tr>
     </thead>
-    <tbody>{% if units %}
-        {% for unit in units %}
+    <tbody>{% if units_with_slots %}
+        {% for unit in units_with_slots %}
         <tr>
             <td>{{ unit.unit_name }}</td>
             {% for hour in hours %}

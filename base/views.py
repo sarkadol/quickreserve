@@ -203,25 +203,40 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     units = Unit.objects.filter(belongs_to_category=category)
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        selected_date = request.GET.get("selected_date")
-        # Here, adjust your query to filter units or reservations based on the selected date
-        # ...reservation_slots = ReservationSlot.objects.filter()
+        selected_date_str = request.GET.get("selected_date")
+        # Make sure to parse the selected_date_str to a datetime.date object correctly
+        selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
 
-        # Render only the table part using a separate template or a dynamically built HTML string
+        # Find the start and end of the selected date using the correctly parsed selected_date
+        start_of_day = datetime.combine(selected_date, time.min)
+        end_of_day = datetime.combine(selected_date, time.max)
+        
+        # Adjust your query to include ReservationSlots based on the selected date
+        # and their relationship to the filtered units
+        units_with_slots = [
+            {
+                "unit": unit,
+                "reservation_slots": unit.reservation_slots.filter(
+                    start_time__gte=start_of_day, 
+                    start_time__lte=end_of_day
+                ).order_by('start_time')
+            } 
+            for unit in units
+        ]
+
         html = render_to_string(
             "reservations_table.html",
             {
-                "units": units,
+                "units_with_slots": units_with_slots,
                 "hours": hours,
             },
             request=request,
         )
-
         return JsonResponse({"html": html})
     return render(
         request,
         "new_reservation_timetable.html",
-        context={},
+        context={"category_name": category.category_name},
     )
 
 
