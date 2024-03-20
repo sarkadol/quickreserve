@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     if (form) {
         form.addEventListener('submit', function(event) {
             event.preventDefault(); 
+            resetSelection();
             var selectedDate = this.elements['selected_date'].value;
             console.log("Selected date:", selectedDate); // Log the selected date
 
@@ -43,6 +44,30 @@ document.addEventListener('DOMContentLoaded', (event) => {
             .catch(error => console.error('Error loading the table:', error));
         });
     }
+
+    function updateSelectionDisplay() {
+    if (!startCell || !endCell) return; // Make sure we have both start and end selections
+
+    // Retrieve the selected date and format it
+    const selectedDate = document.getElementById('dateInput').value;
+    const dateObject = new Date(selectedDate);
+    const formattedDate = dateObject.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Get the start and end times and convert them to AM/PM format
+    const startTime = parseInt(startCell.getAttribute('data-hour'), 10);
+    const endTime = parseInt(endCell.getAttribute('data-hour'), 10);
+    const formattedStartTime = new Date(dateObject.setHours(startTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+    const formattedEndTime = new Date(dateObject.setHours(endTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
+    // Update the DOM elements with the formatted date and times
+    document.getElementById('selected-date-info').textContent = formattedDate;
+    document.getElementById('start-time-info').textContent = formattedStartTime;
+    document.getElementById('end-time-info').textContent = formattedEndTime;
+
+    // Show the selection-info div if it's initially hidden
+    document.getElementById('selection-info').style.display = 'block';
+}
+
 
     // Prevent row click action from covering button click action
     
@@ -105,6 +130,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                             cell.style.backgroundColor = '#ccffcc'; // Highlight end cell
                             highlightRange(startCell, endCell); // Highlight all cells between start and end
                             console.log("End time set for unit ID:", unitId, "at hour:", hour);
+                            updateSelectionDisplay();
                         } else {
                             console.log("Selected cell is before the start cell, not setting as end time.");
                         }
@@ -130,6 +156,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
         startCell = null;
         endCell = null;
+        currentUnitId = null;
         console.log("Selection reset.");
     }
     
