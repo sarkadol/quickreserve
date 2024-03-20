@@ -10,17 +10,18 @@
             {% endfor %}
         </tr>
     </thead>
-    <tbody>{% if units_with_slots %}
+    <tbody>
+        {% if units_with_slots %}
         {% for unit in units_with_slots %}
         <tr>
             <td>{{ unit.unit_name }}</td>
             {% for hour in hours %}
-            
-                <td class="clickable-cell" data-unit-id="{{ unit.id }}" data-hour="{{ hour }}">
-                    <!-- Content here -->
-                    .
-                </td>
-            
+
+            <td class="clickable-cell" data-unit-id="{{ unit.id }}" data-hour="{{ hour }}">
+                <!-- Content here -->
+                .
+            </td>
+
             {% endfor %}
         </tr>
         {% endfor %}
@@ -29,4 +30,3 @@
         {% endif %}
     </tbody>
 </table>
-

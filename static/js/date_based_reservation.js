@@ -1,14 +1,18 @@
+console.log("javascript")
 document.addEventListener('DOMContentLoaded', (event) => {
+    // Set today's date as the default value for the date input
     const date = new Date();
     const today = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
         .toISOString()
         .split("T")[0];
     document.getElementById('dateInput').value = today;
-}); //this puts today's date as defaut value
 
+    // Variables to keep track of the reservation start and end
+    let startCell = null;
+    let endCell = null;
+    let currentUnitId = null;
 
-// loads the schedule
-document.addEventListener('DOMContentLoaded', function() {
+    // Load the schedule on form submission
     var form = document.getElementById('date-form');
     console.log("Form found:", form); // Confirm the form is found
     
@@ -25,93 +29,110 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json()) // Parse the JSON response
             .then(data => {
-                //console.log('Before replace:', data.html); // Log the HTML before replace
                 let htmlWithoutNewlines = data.html.replace(/\n/g, ''); // Remove newlines
-                //console.log('After replace:', htmlWithoutNewlines); // Log the HTML after replace
                 document.getElementById('reservation-table').innerHTML = htmlWithoutNewlines;
-                attachClickableCellListeners();
+                attachClickableCellListeners(); // Re-attach listeners to the new content
             })
             .catch(error => console.error('Error loading the table:', error));
         });
     }
-});
 
-//row click action does not cover button click action 
-//btn-reservation-form
+    // Prevent row click action from covering button click action
+    preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
+    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
 
-document.addEventListener('DOMContentLoaded', function () {
-    //row click action does not cover button click action 
-    //btn-reservation-calendar
-    document.querySelectorAll('.table .btn-reservation-calendar').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            // Stop the event from bubbling up
-            event.stopPropagation();
-
-            // Retrieve data attributes
-            var offerId = this.getAttribute('data-offer-id');
-            var categoryId = this.getAttribute('data-category-id');
-
-            // Construct the URL for the new reservation calendar
-            var url = `/new_reservation_timetable/${offerId}/${categoryId}`;
-
-            // Navigate to the URL
-            console.log("btn res calendar")
-            window.location.href = url;
-            
+    function preventButtonEventPropagation(selector, basePath) {
+        document.querySelectorAll(selector).forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
+                var offerId = this.getAttribute('data-offer-id');
+                var categoryId = this.getAttribute('data-category-id');
+                var url = `${basePath}${offerId}/${categoryId}`;
+                console.log("Navigation triggered to:", url);
+                window.location.href = url;
+            });
         });
-    });
-});
-document.addEventListener('DOMContentLoaded', function () {
-    // Add click event listener for the first button leading to the reservation form
-    document.querySelectorAll('.table .btn-reservation-form').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            // Stop the event from bubbling up
-            event.stopPropagation();
+    }
 
-            // Retrieve data attributes
-            var offerId = this.getAttribute('data-offer-id');
-            var categoryId = this.getAttribute('data-category-id');
+    // Attach click listeners to clickable cells
+    //attachClickableCellListeners();
 
-            // Construct the URL for the reservation form
-            var url = `/new_reservation/${offerId}/${categoryId}`;
-
-            // Navigate to the URL
-            console.log("btn res form")
-            window.location.href = url;
-            
-        });
-    });
-});    
-
-function attachClickableCellListeners() {
-    document.querySelectorAll('.clickable-cell').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-            // Click handling logic here
-            var unitId = this.getAttribute('data-unit-id');
-            var hour = this.getAttribute('data-hour');
-            //console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
-        });
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const table = document.getElementById('reservation-table');
-    if (table) {
-        table.addEventListener('click', function(event) {
-            const cell = event.target.closest('.clickable-cell');
-            if (cell) {
-                // Toggle the background color of the clicked cell
-                if (cell.style.backgroundColor === 'rgb(204, 255, 204)') { // Checking if it's already green
-                    cell.style.backgroundColor = ''; // Removing the color
-                } else {
-                    cell.style.backgroundColor = '#ccffcc'; // Setting to green if not already
+    function attachClickableCellListeners() {
+        const table = document.getElementById('reservation-table');
+        console.log("Table found:", table);
+    
+        if (table) {
+            table.addEventListener('click', function(event) {
+                const cell = event.target.closest('.clickable-cell');
+                if (!cell) {
+                    return; // If the click wasn't on a cell, do nothing
                 }
-
-                // Your existing click handling logic here
-                var unitId = cell.getAttribute('data-unit-id');
-                var hour = cell.getAttribute('data-hour');
+    
+                const unitId = cell.getAttribute('data-unit-id');
+                const hour = cell.getAttribute('data-hour');
+    
                 console.log("Cell clicked for unit ID:", unitId, "at hour:", hour);
-            }
-        });
+    
+                // Check if clicking on a different unit or starting a new selection
+                if (currentUnitId !== unitId) {
+                    console.log("New unit selected or first selection. Resetting.");
+                    // Reset previous selections if any
+                    resetSelection();
+    
+                    // Set the new start
+                    startCell = cell;
+                    currentUnitId = unitId;
+                    cell.style.backgroundColor = '#ccffcc'; // Highlight start cell
+                    console.log("Start time set for unit ID:", unitId, "at hour:", hour);
+                } else {
+                    // If we're clicking in the same row/unit
+                    if (!startCell) {
+                        // If somehow startCell is not set, make this the startCell
+                        startCell = cell;
+                        cell.style.backgroundColor = '#ccffcc'; // Highlight start cell
+                        console.log("Start time set for unit ID:", unitId, "at hour:", hour);
+                    } else if (!endCell) {
+                        // If startCell is set but endCell is not, set endCell
+                        if (cell.cellIndex > startCell.cellIndex) {
+                            endCell = cell;
+                            cell.style.backgroundColor = '#ccffcc'; // Highlight end cell
+                            highlightRange(startCell, endCell); // Highlight all cells between start and end
+                            console.log("End time set for unit ID:", unitId, "at hour:", hour);
+                        } else {
+                            console.log("Selected cell is before the start cell, not setting as end time.");
+                        }
+                    } else {
+                        // If both startCell and endCell are already set, reset and start new selection
+                        console.log("Both start and end times were already set. Resetting for a new selection.");
+                        resetSelection();
+                        startCell = cell;
+                        currentUnitId = unitId;
+                        cell.style.backgroundColor = '#ccffcc'; // Highlight start cell
+                        console.log("Start time set for unit ID:", unitId, "at hour:", hour);
+                    }
+                }
+            });
+        }
+    }
+    
+    function resetSelection() {
+        // This function will clear the selection background color
+        if (startCell) startCell.style.backgroundColor = '';
+        if (endCell) {
+        [...document.querySelectorAll('.clickable-cell')].forEach(cell => cell.style.backgroundColor = '');
+        }
+        startCell = null;
+        endCell = null;
+        console.log("Selection reset.");
+    }
+    
+    function highlightRange(start, end) {
+        // This function will highlight all cells between start and end
+        let currentCell = start.nextElementSibling;
+        while (currentCell && currentCell !== end) {
+            currentCell.style.backgroundColor = '#ccffcc';
+            currentCell = currentCell.nextElementSibling;
+        }
+        console.log("Range highlighted.");
     }
 });
