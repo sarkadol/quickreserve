@@ -1,5 +1,12 @@
 console.log("javascript")
 document.addEventListener('DOMContentLoaded', (event) => {
+    console.log("loaded")
+
+    //handling buttons in clickable table rows
+    preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
+    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
+    
+
     // Set today's date as the default value for the date input
     const date = new Date();
     const today = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
@@ -38,13 +45,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     // Prevent row click action from covering button click action
-    preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
-    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
-
+    
     function preventButtonEventPropagation(selector, basePath) {
+        console.log("prevent button")
         document.querySelectorAll(selector).forEach(function(button) {
             button.addEventListener('click', function(event) {
-                event.stopPropagation();
+                event.stopImmediatePropagation(); // This is crucial
                 var offerId = this.getAttribute('data-offer-id');
                 var categoryId = this.getAttribute('data-category-id');
                 var url = `${basePath}${offerId}/${categoryId}`;
@@ -53,6 +59,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             });
         });
     }
+    
 
     // Attach click listeners to clickable cells
     //attachClickableCellListeners();
