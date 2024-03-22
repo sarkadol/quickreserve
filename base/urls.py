@@ -18,6 +18,10 @@ urlpatterns = [
     path('new_reservation/<int:offer_id>/<int:category_id>', views.new_reservation, name='new_reservation'),
     path('new_reservation',views.new_reservation, name='new_reservation' ),
     path('managed_reservations',views.managed_reservations, name='managed_reservations' ),
+     path('reservation-details/', views.reservation_details, name='reservation_details'),
+    path('submit_reservation/', views.submit_reservation, name='submit_reservation'),
+    path('verify_reservation/<str:token>/', views.verify_reservation, name='verify_reservation'),  # Assuming you have a verify_reservation view
+
 
     
 

@@ -3,7 +3,7 @@
 {% block content %}
 {% load static %}
 
-<div class="container-md">
+<div class="container-md" >
     <h1> New reservation timetable '{{ category_name }}'</h1>
     <form method="get" action="" id="date-form">
         <input type="date" id="dateInput" name="selected_date" required>
@@ -15,7 +15,7 @@
             Reservation for more days
         </label>
     </div>
-    
+
     <script src="{% static 'js/date_based_reservation.js' %}"></script>
     <div id="reservation-table">
         <!-- Dynamic content from reservations_table.html will be loaded here -->
@@ -25,7 +25,8 @@
         <span id="selected-date-info"></span>,
         <span id="start-time-info"></span> to
         <span id="end-time-info"></span> <!--TO DO handle date "noon" problem when displaying-->
-      </div>
+    </div>
+    <button id="nextButton" class="btn btn-primary" disabled>Next</button> <!-- The Next button, initially disabled -->
 
 </div>
 {% endblock %}

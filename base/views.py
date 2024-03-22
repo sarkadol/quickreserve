@@ -175,6 +175,7 @@ def edit_category(request, offer_id=None, category_id=None):
             {
                 "units": units,
                 "hours": hours,
+                
             },
             request=request,
         )
@@ -229,6 +230,8 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
             {
                 "units_with_slots": units_with_slots,
                 "hours": hours,
+                "category_name":category.category_name,
+                "category_id":category_id,
             },
             request=request,
         )
@@ -625,3 +628,74 @@ def create_unit(reservation):
 def check_category_availability():
     pass
     # return true/false?
+
+def reservation_details(request):
+     # Extract parameters from the query string
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+    category_id = request.GET.get('category')
+
+    # Use the category_id to get the Category object and its name
+    category = None
+    category_name = ''
+    if category_id:
+        try:
+            category = Category.objects.get(pk=category_id)
+            category_name = category.category_name
+        except Category.DoesNotExist:
+            pass  # Handle the case where the category doesn't exist if necessary
+
+    # Prepare the context
+    context = {
+        'start_date': start_date,
+        'end_date': end_date,
+        'category_name': category_name,
+        'category': category_id,  # Assuming you want to pass the ID for form submission
+    }
+
+    return render(request, 'reservation_details.html', context)
+
+def verify_reservation(request, token):
+    try:
+        reservation = Reservation.objects.get(verification_token=token, status='pending')
+        reservation.status = 'confirmed'
+        reservation.save()
+        return HttpResponse('Your reservation is confirmed. Thank you!')
+    except Reservation.DoesNotExist:
+        return HttpResponse('Invalid or expired link.')
+    
+import uuid
+from django.http import HttpResponse
+from .models import Reservation
+from django.core.mail import send_mail
+from django.conf import settings
+
+def submit_reservation(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        category = request.POST.get('category')
+        token = uuid.uuid4().hex
+
+        reservation = Reservation(
+            name=name,
+            email=email,
+            start_date=start_date,
+            end_date=end_date,
+            category=category,
+            verification_token=token,
+            status='pending'
+        )
+        reservation.save()
+
+        verification_link = request.build_absolute_uri(f'/verify_reservation/{token}/')
+        send_mail(
+            'Verify your reservation',
+            f'Please click on the link to confirm your reservation: {verification_link}',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+        return HttpResponse('Please check your email to confirm the reservation.')
