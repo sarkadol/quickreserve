@@ -118,7 +118,10 @@ class Reservation(models.Model):
         blank=True,
         help_text="Whether the reservation is confirmed by a manager"
     )
-    customer_email = models.CharField(max_length=255, default="email@example.com", help_text="Customer email for reservation communication")
+    customer_email = models.EmailField()
+    customer_name = models.CharField(max_length=100)
+    verification_token = models.CharField(max_length=64)  # Assuming you're using a hex token
+
     belongs_to_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='reservations', help_text="The category of the unit being reserved")
     status = models.CharField(
         max_length=20,

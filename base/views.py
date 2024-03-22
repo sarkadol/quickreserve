@@ -650,7 +650,7 @@ def reservation_details(request):
         'start_date': start_date,
         'end_date': end_date,
         'category_name': category_name,
-        'category': category_id,  # Assuming you want to pass the ID for form submission
+        'category_id': category_id,  # Assuming you want to pass the ID for form submission
     }
 
     return render(request, 'reservation_details.html', context)
@@ -672,20 +672,23 @@ from django.conf import settings
 
 def submit_reservation(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
+        customer_name = request.POST.get('name')
+        customer_email = request.POST.get('email')
+        # Assuming you retrieve these from the form or as parameters
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-        category = request.POST.get('category')
+        category_id = request.POST.get('category_id')
+        print("cat id",category_id)
+        category = get_object_or_404(Category, pk=category_id)
         token = uuid.uuid4().hex
 
         reservation = Reservation(
-            name=name,
-            email=email,
-            start_date=start_date,
-            end_date=end_date,
-            category=category,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            reservation_from=start_date,
+            reservation_to=end_date,
             verification_token=token,
+            belongs_to_category=category,
             status='pending'
         )
         reservation.save()
@@ -695,7 +698,7 @@ def submit_reservation(request):
             'Verify your reservation',
             f'Please click on the link to confirm your reservation: {verification_link}',
             settings.DEFAULT_FROM_EMAIL,
-            [email],
+            [customer_email],
             fail_silently=False,
         )
         return HttpResponse('Please check your email to confirm the reservation.')

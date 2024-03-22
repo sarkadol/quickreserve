@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const dateInput = document.getElementById('dateInput').value;
         const startHour = startCell ? startCell.getAttribute('data-hour') : 'null';
         const endHour = endCell ? endCell.getAttribute('data-hour') : 'null';
-
+        
         const selectedStartDate = `${dateInput}T${startHour}:00`;
         const selectedEndDate = `${dateInput}T${endHour}:00`;
 
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const selectedCategoryId = currentCategoryId; // Use the category ID for redirection
         const selectedCategoryName = currentCategoryName; // Example use case
 
-        console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}, Category: ${selectedCategoryId}, Category Name: ${selectedCategoryName}`);
+        console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}, Category ID: ${selectedCategoryId}, Category Name: ${selectedCategoryName}`);
 
         window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&category=${selectedCategoryId}`;
     });
