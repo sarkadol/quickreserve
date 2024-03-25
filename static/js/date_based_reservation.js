@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     console.log("loaded")
+    preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
+    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
 
     // Prevent default action for buttons in clickable table rows and navigate programmatically
     function preventButtonEventPropagation(selector, basePath) {
@@ -108,6 +110,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 if (!cell) return;
 
                 const unitId = cell.getAttribute('data-unit-id');
+                const hour = cell.getAttribute('data-hour');
+                const categoryId = cell.getAttribute('data-category-id');
+                const categoryName = cell.getAttribute('data-category-name');
+
+
+                // Store the category ID and name in variables accessible to the Next button click handler
+                currentCategoryId = categoryId;
+                currentCategoryName = categoryName;
+                
                 console.log("Cell clicked for unit ID:", unitId, "at hour:", cell.getAttribute('data-hour'), "in category:", cell.getAttribute('data-category-name'));
 
                 if (startCell === cell || endCell === cell) {
@@ -125,7 +136,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     if (!startCell) {
                         startCell = cell;
                         cell.style.backgroundColor = '#ccffcc';
-                    } else if (!endCell || cell.cellIndex > startCell.cellIndex) {
+                    } else if (!endCell && cell.cellIndex > startCell.cellIndex) {
                         endCell = cell;
                         cell.style.backgroundColor = '#ccffcc';
                         highlightRange(startCell, endCell);
@@ -142,10 +153,23 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('nextButton').addEventListener('click', () => {
         console.log("Next button clicked");
         // Logic for handling next button click remains unchanged
+        const dateInput = document.getElementById('dateInput').value;
+        const startHour = startCell ? startCell.getAttribute('data-hour') : 'null';
+        const endHour = endCell ? endCell.getAttribute('data-hour') : 'null';
+        
+        const selectedStartDate = `${dateInput}T${startHour}:00`;
+        const selectedEndDate = `${dateInput}T${endHour}:00`;
+
+        // Use the captured category ID and name
+        const selectedCategoryId = currentCategoryId; // Use the category ID for redirection
+        const selectedCategoryName = currentCategoryName; // Example use case
+
+        console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}, Category ID: ${selectedCategoryId}, Category Name: ${selectedCategoryName}`);
+
+        window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&category=${selectedCategoryId}`;
     });
 
     // Invoke these functions at the end to ensure they are attached at the start.
-    preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
-    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
+    
     attachClickableCellListeners(); // Ensure this is called initially too.
 });
