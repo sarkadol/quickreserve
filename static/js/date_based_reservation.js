@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             .toISOString()
             .split("T")[0];
         document.getElementById('dateInput').value = today;
+        console.log("ISO cas ",today)
     }
 
     setDateToToday();
@@ -152,22 +153,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     document.getElementById('nextButton').addEventListener('click', () => {
         console.log("Next button clicked");
-        // Logic for handling next button click remains unchanged
         const dateInput = document.getElementById('dateInput').value;
-        const startHour = startCell ? startCell.getAttribute('data-hour') : 'null';
-        const endHour = endCell ? endCell.getAttribute('data-hour') : 'null';
+        let startHour = startCell ? startCell.getAttribute('data-hour') : 'null';
+        let endHour = endCell ? endCell.getAttribute('data-hour') : 'null';
+        console.log("startHOUR",startHour)
+        // Ensure hours are two digits and use 24-hour format
+        startHour = startHour.padStart(2, '0');
+        endHour = endHour.padStart(2, '0');
         
         const selectedStartDate = `${dateInput}T${startHour}:00`;
         const selectedEndDate = `${dateInput}T${endHour}:00`;
+    
+        console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}`);
+        
+        const categoryParam = currentCategoryId ? `&category=${encodeURIComponent(currentCategoryId)}` : '';
 
-        // Use the captured category ID and name
-        const selectedCategoryId = currentCategoryId; // Use the category ID for redirection
-        const selectedCategoryName = currentCategoryName; // Example use case
-
-        console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}, Category ID: ${selectedCategoryId}, Category Name: ${selectedCategoryName}`);
-
-        window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&category=${selectedCategoryId}`;
+        window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
     });
+    
 
     // Invoke these functions at the end to ensure they are attached at the start.
     
