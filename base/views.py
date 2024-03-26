@@ -203,6 +203,12 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     category = get_object_or_404(Category, pk=category_id)
     hours = [time(hour=h) for h in range(24)]
     units = Unit.objects.filter(belongs_to_category=category)
+    
+    today = timezone.localdate()
+    print("dnesek ",today)
+    print("calling ensure availability")
+    #ensure_availability_for_day(today,category_id)#TODO
+    
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         selected_date_str = request.GET.get("selected_date")
@@ -780,3 +786,45 @@ def submit_reservation(request):
             fail_silently=False,
         )
         return HttpResponse(f'Please check your email "{customer_email}" to confirm the reservation.')
+
+def create_slots_for_unit(unit, day):
+    """
+    Create reservation slots for the given unit and day.
+    """
+    start_time = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
+    end_time = start_time + timedelta(days=1)
+
+    while start_time < end_time:
+        ReservationSlot.objects.create(
+            unit=unit,
+            start_time=start_time,
+            status="available"
+        )
+        start_time += timedelta(minutes=30)  # Assuming 30-minute slots
+
+def ensure_availability_for_day(day, category_id):
+    """
+    Ensure there is at least one fully available unit for the given day and category.
+    If not, create a new unit and slots for it within the specified category.
+    """
+    # Fetch the category
+    print("cat ID",category_id)
+    category = get_object_or_404(Category, pk=category_id) #TODO tehnhle řádek dělá problémy, nedokáže vzít belongs_to_category=category
+    print(category)
+    # Check for fully available units within the category for the given day
+    fully_available_units = Unit.objects.filter(belongs_to_category=category).exclude(
+        reservation_slots__start_time__date=day,
+        reservation_slots__status__in=["reserved", "maintenance"]
+    )
+    
+    if not fully_available_units.exists():
+        # Create a new unit within the category
+        new_unit = Unit.objects.create(category=category)
+
+        # Create slots for the new unit
+        create_slots_for_unit(new_unit, day)
+
+    # Ensure slots are created for all units in the category which do not have slots on the given day
+    for unit in Unit.objects.filter(category=category):
+        if not ReservationSlot.objects.filter(unit=unit, start_time__date=day).exists():
+            create_slots_for_unit(unit, day)
