@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponse
+import pytz
 from . import models, forms
 from datetime import datetime, time, timedelta
 from django.contrib import messages
@@ -635,6 +636,7 @@ def reservation_details(request):
     #start_date = request.GET.get('start')
     #end_date = request.GET.get('end')
     category_id = request.GET.get('category')
+    #user_timezone = request.GET.get('category') #TO DO
 
     # just to continue - to be fixed
     start_date = "2024-03-26 10:00"
@@ -656,19 +658,70 @@ def reservation_details(request):
         'end_date': end_date,
         'category_name': category_name,
         'category_id': category_id,  # Assuming you want to pass the ID for form submission
+        #'user_timezone': user_timezone
     }
 
     return render(request, 'reservation_details.html', context)
 
-def verify_reservation(request, token):
+def verify_reservationPUVODNI(request, token):
     try:
+        # Attempt to retrieve the reservation using the provided token
         reservation = Reservation.objects.get(verification_token=token, status='pending')
-        reservation.status = 'confirmed'
-        reservation.save()
-        return HttpResponse('Your reservation is confirmed. Thank you!')
+        
+        # Check if the link has expired (more than 1 hour since submission)
+        if timezone.now() - reservation.submission_time > timedelta(hours=1): # 1 hour before the link expires
+            # Link has expired
+            reservation.status = 'cancelled'  # Optionally update the status to 'expired'
+            reservation.save()  # Save the updated status
+            return HttpResponse('This reservation link has expired.')
+        else:
+            # Link is still valid, confirm the reservation
+            reservation.status = 'confirmed'
+            reservation.save()
+            return HttpResponse('Your reservation is confirmed. Thank you!')
     except Reservation.DoesNotExist:
         return HttpResponse('Invalid or expired link.')
-    
+
+def verify_reservation(request, token):
+    reservation = get_object_or_404(Reservation, verification_token=token)
+
+    # Pass the reservation and token to the template
+    return render(request, 'reservation_confirm_cancel.html', {
+        'reservation': reservation,
+        'token': token
+    })
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+@require_POST
+def confirm_reservation(request, token):
+    try:
+        # Attempt to retrieve the reservation using the provided token
+        reservation = Reservation.objects.get(verification_token=token, status='pending')
+        
+        # Check if the link has expired (more than 1 hour since submission)
+        if timezone.now() - reservation.submission_time > timedelta(hours=1): # 1 hour before the link expires
+            # Link has expired
+            reservation.status = 'cancelled'  # Optionally update the status to 'expired'
+            reservation.save()  # Save the updated status
+            return HttpResponse('This reservation link has expired.')
+        else:
+            # Link is still valid, confirm the reservation
+            reservation.status = 'confirmed'
+            reservation.save()
+            return HttpResponse('Your reservation is confirmed. Thank you!')
+    except Reservation.DoesNotExist:
+        return HttpResponse('Invalid or expired link.')
+
+@require_POST
+def cancel_reservation(request, token):
+    reservation = get_object_or_404(Reservation, verification_token=token, status='pending')
+    reservation.status = 'cancelled'
+    reservation.save()
+    # Redirect to a cancellation confirmation page or similar
+    return HttpResponseRedirect(reverse('reservation_cancelled'))
+
 import uuid
 from django.http import HttpResponse
 from .models import Reservation
@@ -687,6 +740,15 @@ def submit_reservation(request):
         print("cat id",category_id)
         category = get_object_or_404(Category, pk=category_id)
         token = uuid.uuid4().hex
+        submission_time = timezone.now()
+        
+        """user_timezone = request.POST.get('user_timezone', 'UTC')  # Default to UTC if not provided
+        submission_time = timezone.now()
+        
+        # Convert submission_time to the user's timezone
+        user_tz = pytz.timezone(user_timezone)
+        localized_submission_time = submission_time.astimezone(user_tz)"""
+        
 
         reservation = Reservation(
             customer_name=customer_name,
@@ -695,16 +757,31 @@ def submit_reservation(request):
             reservation_to=end_date,
             verification_token=token,
             belongs_to_category=category,
-            status='pending'
+            status='pending',
+            submission_time = submission_time
         )
         reservation.save()
 
         verification_link = request.build_absolute_uri(f'/verify_reservation/{token}/')
+        email_body = f"""
+        Hello {customer_name},
+
+        Thank you for your reservation. Here are the details:
+        - Category: {category.category_name}
+        - Start Date: {start_date}
+        - End Date: {end_date}
+        - Submission Time: {submission_time.strftime("%Y-%m-%d %H:%M:%S %Z")}
+        Please click on the link below to confirm your reservation:
+        {verification_link}
+
+        If you did not make this reservation, please ignore this email.
+        """
+
         send_mail(
-            'Verify your reservation',
-            f'Please click on the link to confirm your reservation: {verification_link}',
+            f'Verify your reservation for {category.category_name}',
+            email_body,
             settings.DEFAULT_FROM_EMAIL,
             [customer_email],
             fail_silently=False,
         )
-        return HttpResponse('Please check your email to confirm the reservation.')
+        return HttpResponse(f'Please check your email "{customer_email}" to confirm the reservation.')

@@ -11,8 +11,9 @@
     <input type="hidden" name="start_date" value="{{ start_date }}">
     <input type="hidden" name="end_date" value="{{ end_date }}">
     <input type="hidden" name="category_id" value="{{ category_id }}">
-    <input type="text" name="name" placeholder="Your Name" required>
-    <input type="email" name="email" placeholder="Your Email" required>
+    <input type="hidden" name="user_timezone" value="{{ user_timezone }}">
+    <input type="text" name="name" placeholder="Your Name" required value="Sarka D">
+    <input type="email" name="email" placeholder="Your Email" required value="sarka.dolezalova@email.cz">
     <button type="submit">Submit Reservation</button>
 </form>
 {% endblock %}
