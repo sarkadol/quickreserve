@@ -3,18 +3,60 @@
 {% load static %}
 {% block content %}
 
-<h1>Confirm or Cancel Reservation</h1>
-    <p>Please choose an option for your reservation:</p>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="p-5 shadow rounded bg-light"> <!-- Changed to bg-light for a lighter background -->
+                <h1 class="text-center mb-3">Your reservation</h1> <!-- Removed text-white for better contrast -->
+                <p class="text-center mb-3">Please review your reservation details:</p>
+                <!-- Removed text-white for better contrast -->
 
-    <form action="{% url 'confirm_reservation' token %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Confirm Reservation</button>
-    </form>
+                <!-- Reservation Details -->
+                <div class="mb-4">
+                    <p><strong>Email:</strong> {{ customer_email }}</p>
+                    <p><strong>Category:</strong> {{ category_name }}</p>
+                    <p><strong>Start Time:</strong> {{ start_date }}</p>
+                    <p><strong>End Time:</strong> {{ end_date }}</p>
+                </div>
 
-    <form action="{% url 'cancel_reservation' token %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Cancel Reservation</button>
-    </form>
+                {% if status == 'pending' %}
+                <form action="{% url 'confirm_reservation' token %}" method="post" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">Confirm Reservation</button>
+                </form>
+                {% endif %}
 
+                <form action="{% url 'cancel_reservation' token %}" method="post">
+                    {% csrf_token %}
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#cancelModal"
+                        class="btn btn-danger w-100">Cancel Reservation</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- Cancel Reservation Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this reservation?</p>
+                <form action="{% url 'cancel_reservation' token %}" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Yes, cancel my reservation</button>
+                    
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 
 {% endblock %}

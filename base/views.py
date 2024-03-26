@@ -663,33 +663,28 @@ def reservation_details(request):
 
     return render(request, 'reservation_details.html', context)
 
-def verify_reservationPUVODNI(request, token):
-    try:
-        # Attempt to retrieve the reservation using the provided token
-        reservation = Reservation.objects.get(verification_token=token, status='pending')
-        
-        # Check if the link has expired (more than 1 hour since submission)
-        if timezone.now() - reservation.submission_time > timedelta(hours=1): # 1 hour before the link expires
-            # Link has expired
-            reservation.status = 'cancelled'  # Optionally update the status to 'expired'
-            reservation.save()  # Save the updated status
-            return HttpResponse('This reservation link has expired.')
-        else:
-            # Link is still valid, confirm the reservation
-            reservation.status = 'confirmed'
-            reservation.save()
-            return HttpResponse('Your reservation is confirmed. Thank you!')
-    except Reservation.DoesNotExist:
-        return HttpResponse('Invalid or expired link.')
-
 def verify_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
+    start_date = reservation.reservation_from.strftime("%Y-%m-%d %H:%M")
+    end_date = reservation.reservation_to.strftime("%Y-%m-%d %H:%M")
+    category_name = reservation.belongs_to_category.category_name
+    customer_email = reservation.customer_email
+    status = reservation.status  # Retrieve the reservation status
+    print("status je",status)
 
-    # Pass the reservation and token to the template
-    return render(request, 'reservation_confirm_cancel.html', {
-        'reservation': reservation,
-        'token': token
-    })
+    context = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'category_name': category_name,
+            'reservation': reservation,
+            'token': token,
+            'customer_email':customer_email,
+            'status': status, 
+        }
+
+    # Pass context to the template
+    return render(request, 'reservation_confirm_cancel.html', context)
+
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -716,11 +711,11 @@ def confirm_reservation(request, token):
 
 @require_POST
 def cancel_reservation(request, token):
-    reservation = get_object_or_404(Reservation, verification_token=token, status='pending')
+    reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = 'cancelled'
     reservation.save()
     # Redirect to a cancellation confirmation page or similar
-    return HttpResponseRedirect(reverse('reservation_cancelled'))
+    return HttpResponse('The reservation was cancelled')
 
 import uuid
 from django.http import HttpResponse

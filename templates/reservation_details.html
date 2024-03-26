@@ -3,17 +3,58 @@
 {% load static %}
 
 {% block content %}
-<form action="{% url 'submit_reservation' %}" method="post" class="form">
-    {% csrf_token %}
-    <p>Start Date: {{ start_date }}</p>
-    <p>End Date: {{ end_date }}</p>
-    <p>Category: {{ category_name }}</p>
-    <input type="hidden" name="start_date" value="{{ start_date }}">
-    <input type="hidden" name="end_date" value="{{ end_date }}">
-    <input type="hidden" name="category_id" value="{{ category_id }}">
-    <input type="hidden" name="user_timezone" value="{{ user_timezone }}">
-    <input type="text" name="name" placeholder="Your Name" required value="Sarka D">
-    <input type="email" name="email" placeholder="Your Email" required value="sarka.dolezalova@email.cz">
-    <button type="submit">Submit Reservation</button>
-</form>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reservation Details</h5>
+                    <p class="text-muted">Please fill out the form below to submit your reservation. After submitting, you will need to confirm the reservation from your email.</p>
+                    <form action="{% url 'submit_reservation' %}" method="post" class="form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <p>Start Date: {{ start_date }}</p>
+                            <p>End Date: {{ end_date }}</p>
+                            <p>Category: {{ category_name }}</p>
+                        </div>
+                        <input type="hidden" name="start_date" value="{{ start_date }}">
+                        <input type="hidden" name="end_date" value="{{ end_date }}">
+                        <input type="hidden" name="category_id" value="{{ category_id }}">
+                        <input type="hidden" name="user_timezone" value="{{ user_timezone }}">
+
+                        <div class="row g-3 align-items-center mb-3">
+                            <div class="col-auto">
+                                <label for="nameInput" class="col-form-label">Name</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="text" class="form-control" id="nameInput" name="name" required value="Sarka D">
+                            </div>
+                            <div class="col-auto">
+                                <span id="nameHelp" class="form-text">
+                                    Insert your name here.
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 align-items-center mb-3">
+                            <div class="col-auto">
+                                <label for="emailInput" class="col-form-label">Email</label>
+                            </div>
+                            <div class="col">
+                                <input type="email" class="form-control" id="emailInput" name="email" placeholder="Insert your email here" required value="sarka.dolezalova@email.cz">
+                            </div>
+                            <div class="col-auto">
+                                <span id="emailHelp" class="form-text">
+                                    You will receive a confirmation email at this address.
+                                </span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Submit Reservation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
