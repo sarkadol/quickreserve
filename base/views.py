@@ -631,10 +631,14 @@ def check_category_availability():
     # return true/false?
 
 def reservation_details(request):
-     # Extract parameters from the query string
-    start_date = request.GET.get('start')
-    end_date = request.GET.get('end')
+     # Extract parameters from the query string TO DO
+    #start_date = request.GET.get('start')
+    #end_date = request.GET.get('end')
     category_id = request.GET.get('category')
+
+    # just to continue - to be fixed
+    start_date = "2024-03-26 10:00"
+    end_date = "2024-03-26 13:00"
 
     # Use the category_id to get the Category object and its name
     category = None
@@ -672,6 +676,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 def submit_reservation(request):
+    print("submitting reservation")
     if request.method == 'POST':
         customer_name = request.POST.get('name')
         customer_email = request.POST.get('email')

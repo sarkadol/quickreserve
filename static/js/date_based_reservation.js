@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (table) {
             table.addEventListener('click', function (event) {
                 const cell = event.target.closest('.clickable-cell');
-                if (!cell) return;
+                if (!cell || cell.classList.contains('slot-reserved')) return;
 
                 const unitId = cell.getAttribute('data-unit-id');
                 const hour = cell.getAttribute('data-hour');

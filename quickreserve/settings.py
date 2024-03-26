@@ -49,6 +49,14 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # The hostname of your email provider
+EMAIL_PORT = 587  # Common port for SMTP
+EMAIL_USE_TLS = True  # Use TLS encryption
+EMAIL_HOST_USER = 'noreply.quickreserve@gmail.com'  # Your email address
+EMAIL_HOST_PASSWORD = 'oibx bhxo nhsy obtb'  # Your email account password
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
