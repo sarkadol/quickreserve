@@ -79,11 +79,11 @@ class Unit(models.Model):
         Category, on_delete=models.CASCADE
     )  # belongs to 4people rooms
 
-    class Meta:
+    """class Meta:
         unique_together = (
             "unit_name",
             "belongs_to_category",
-        )  # two units can have same name if they are in different category
+        )  # two units can have same name if they are in different category"""
 
     def __str__(self):
         return self.unit_name  # rewrites Category object (x) to its name in admin panel
@@ -106,6 +106,8 @@ class ReservationSlot(models.Model):
             ("maintenance", "Maintenance"),
         ],
     )
+    def __str__(self):
+        return f"Slot in {self.unit} from {self.start_time} for {self.duration}"
 
 class Reservation(models.Model):
     reservation_from = models.DateTimeField(help_text="Start time/date of the reservation")
@@ -139,4 +141,4 @@ class Reservation(models.Model):
         return f"Reservation for {self.belongs_to_category} from {self.reservation_from} to {self.reservation_to}"
 
     class Meta:
-        ordering = ['submission_time'] # Reservations ordered in ascending order (earliest first)
+        ordering = ['-submission_time'] # Reservations ordered in ascending order (earliest first)

@@ -206,8 +206,8 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     
     today = timezone.localdate()
     print("dnesek ",today)
-    print("calling ensure availability")
-    #ensure_availability_for_day(today,category_id)#TODO
+    #print("calling ensure availability")
+    ensure_availability_for_day(today,category_id)#TODO
     
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -694,6 +694,7 @@ def verify_reservation(request, token):
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.db.models import F, ExpressionWrapper, DateTimeField
 
 @require_POST
 def confirm_reservation(request, token):
@@ -710,7 +711,40 @@ def confirm_reservation(request, token):
         else:
             # Link is still valid, confirm the reservation
             reservation.status = 'confirmed'
-            reservation.save()
+            #reservation.save()
+            print("reservation saved")
+
+            # Identify and reserve slots
+            reservation_slots = ReservationSlot.objects.annotate(
+            end_time=ExpressionWrapper(
+                F('start_time') + (F('duration') * timedelta(minutes=1)),
+                output_field=DateTimeField()
+            )
+            ).filter(
+                unit__belongs_to_category=reservation.belongs_to_category,
+                start_time__gte=reservation.reservation_from,
+                end_time__lte=reservation.reservation_to,
+                status='available'
+            )
+            reservation_slots.update(status='reserved')
+            print("slots updated")
+            
+            # Optionally, clean up unused slots
+            # Fetch all Unit objects associated with the target Category
+            units_in_category = Unit.objects.filter(belongs_to_category=reservation.belongs_to_category)
+            print("units: ",units_in_category)
+            # Delete all available slots in these units
+            slots = ReservationSlot.objects.filter(
+                unit__in=units_in_category,
+                status='available'
+            )
+            ReservationSlot.objects.filter(
+                unit__in=units_in_category,
+                status='available'
+            ).delete()
+            print(slots)
+            print("slots deleted")
+
             return HttpResponse('Your reservation is confirmed. Thank you!')
     except Reservation.DoesNotExist:
         return HttpResponse('Invalid or expired link.')
@@ -772,7 +806,7 @@ def submit_reservation(request):
         - Start Date: {start_date}
         - End Date: {end_date}
         - Submission Time: {submission_time.strftime("%Y-%m-%d %H:%M:%S %Z")}
-        Please click on the link below to confirm your reservation:
+        Please follow the link below to confirm your reservation:
         {verification_link}
 
         If you did not make this reservation, please ignore this email.
@@ -809,22 +843,22 @@ def ensure_availability_for_day(day, category_id):
     """
     # Fetch the category
     print("cat ID",category_id)
-    category = get_object_or_404(Category, pk=category_id) #TODO tehnhle řádek dělá problémy, nedokáže vzít belongs_to_category=category
-    print(category)
+    belongs_to_category = get_object_or_404(Category, pk=category_id) 
+    print(belongs_to_category)
     # Check for fully available units within the category for the given day
-    fully_available_units = Unit.objects.filter(belongs_to_category=category).exclude(
+    fully_available_units = Unit.objects.filter(belongs_to_category=belongs_to_category).exclude(
         reservation_slots__start_time__date=day,
         reservation_slots__status__in=["reserved", "maintenance"]
     )
     
     if not fully_available_units.exists():
         # Create a new unit within the category
-        new_unit = Unit.objects.create(category=category)
+        new_unit = Unit.objects.create(belongs_to_category=belongs_to_category)
 
         # Create slots for the new unit
         create_slots_for_unit(new_unit, day)
 
     # Ensure slots are created for all units in the category which do not have slots on the given day
-    for unit in Unit.objects.filter(category=category):
+    for unit in Unit.objects.filter(belongs_to_category=belongs_to_category):
         if not ReservationSlot.objects.filter(unit=unit, start_time__date=day).exists():
             create_slots_for_unit(unit, day)
