@@ -205,6 +205,7 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     
     units = Unit.objects.filter(belongs_to_category=category)
     
+    #TODO dynamic time, not just today
     today = timezone.localdate()
     print("dnesek ",today)
     #print("calling ensure availability")
@@ -709,39 +710,21 @@ def confirm_reservation(request, token):
         else:
             # Link is still valid, confirm the reservation
             reservation.status = 'confirmed'
-            reservation.save()
+            #reservation.save()
             print("reservation saved")
 
             # Identify and reserve slots
-            reservation_slots = ReservationSlot.objects.annotate(
-            end_time=ExpressionWrapper(
-                F('start_time') + (F('duration') * timedelta(minutes=1)),
-                output_field=DateTimeField()
-            )
-            ).filter(
+            reservation_slots = ReservationSlot.objects.filter(
                 unit__belongs_to_category=reservation.belongs_to_category,
                 start_time__gte=reservation.reservation_from,
                 end_time__lte=reservation.reservation_to,
                 status='available'
             )
+            
             reservation_slots.update(status='reserved')
             print("slots updated")
             
-            # Optionally, clean up unused slots
-            # Fetch all Unit objects associated with the target Category
-            units_in_category = Unit.objects.filter(belongs_to_category=reservation.belongs_to_category)
-            print("units: ",units_in_category)
-            # Delete all available slots in these units
-            slots = ReservationSlot.objects.filter(
-                unit__in=units_in_category,
-                status='available'
-            )
-            ReservationSlot.objects.filter(
-                unit__in=units_in_category,
-                status='available'
-            ).delete()
-            print(slots)
-            print("slots deleted")
+            delete_available_slots_for_category(reservation.belongs_to_category)
 
             return HttpResponse('Your reservation is confirmed. Thank you!')
     except Reservation.DoesNotExist:
@@ -860,3 +843,22 @@ def ensure_availability_for_day(day, category_id):
     for unit in Unit.objects.filter(belongs_to_category=belongs_to_category):
         if not ReservationSlot.objects.filter(unit=unit, start_time__date=day).exists():
             create_slots_for_unit(unit, day)
+
+def delete_available_slots_for_category(category):
+    # Fetch all Unit objects associated with the target Category
+    units_in_category = Unit.objects.filter(belongs_to_category=category)
+    
+    # Count the slots before deletion for logging or debugging purposes
+    slots_before_deletion = ReservationSlot.objects.filter(
+        unit__in=units_in_category,
+        status='available'
+    ).count()
+
+    # Delete all available slots in these units
+    deleted_slots_count = ReservationSlot.objects.filter(
+        unit__in=units_in_category,
+        status='available'
+    ).delete()
+
+    # Logging the result
+    print(f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'.")

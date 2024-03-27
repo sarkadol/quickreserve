@@ -94,7 +94,7 @@ class ReservationSlot(models.Model):
         Unit, related_name="reservation_slots", on_delete=models.CASCADE
     )
     start_time = models.DateTimeField()
-    
+    end_time = models.DateTimeField(null=True, blank=True)
     duration = models.DurationField(default=timedelta(minutes=30))
 
     # Consider including a status field as suggested previously
@@ -106,8 +106,14 @@ class ReservationSlot(models.Model):
             ("maintenance", "Maintenance"),
         ],
     )
+    def save(self, *args, **kwargs):
+        # Automatically calculate end_time before saving
+        if not self.end_time:
+            self.end_time = self.start_time + self.duration
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Slot in {self.unit} from {self.start_time} for {self.duration}"
+        return f"Slot in {self.unit} from {self.start_time} to {self.end_time}"
 
 class Reservation(models.Model):
     reservation_from = models.DateTimeField(help_text="Start time/date of the reservation")

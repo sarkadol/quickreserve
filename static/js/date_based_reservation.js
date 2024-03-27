@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const formattedDate = dateObject.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
         const startTime = parseInt(startCell.getAttribute('data-hour'), 10);
-        const endTime = parseInt(endCell.getAttribute('data-hour'), 10) + 1; // Assuming end time is the next hour
+        const endTime = parseInt(endCell.getAttribute('data-hour'), 10); 
         const formattedStartTime = new Date(dateObject.setHours(startTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false });
         const formattedEndTime = new Date(dateObject.setHours(endTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
 
