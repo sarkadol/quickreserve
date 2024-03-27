@@ -45,7 +45,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to cancel this reservation?</p>
+                <p>Are you sure you want to cancel this reservation? This action cannot be undone.</p>
                 <form action="{% url 'cancel_reservation' token %}" method="post">
                     {% csrf_token %}
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

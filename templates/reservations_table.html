@@ -18,9 +18,9 @@
             <td>{{ unit.unit.unit_name }} {{ unit.unit.id }}</td>
             {% for hour in hours %}
 
-            <td class="clickable-cell" data-unit-id="{{ unit.unit.id }}" data-hour="{{ hour }}" data-category-name="{{ category_name }}" data-category-id="{{ category_id }}">
+            <td class="clickable-cell" data-unit-id="{{ unit.unit.id }}" data-hour="{{ hour|time:'H' }}" data-category-name="{{ category_name }}" data-category-id="{{ category_id }}">
                 <!-- Content here -->
-                 _
+                _
             </td>
 
             {% endfor %}

@@ -202,6 +202,7 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     offer = get_object_or_404(Offer, pk=offer_id)
     category = get_object_or_404(Category, pk=category_id)
     hours = [time(hour=h) for h in range(24)]
+    
     units = Unit.objects.filter(belongs_to_category=category)
     
     today = timezone.localdate()
@@ -214,7 +215,7 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
         selected_date_str = request.GET.get("selected_date")
         # Make sure to parse the selected_date_str to a datetime.date object correctly
         selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-
+        
         # Find the start and end of the selected date using the correctly parsed selected_date
         start_of_day = datetime.combine(selected_date, time.min)
         end_of_day = datetime.combine(selected_date, time.max)
@@ -231,7 +232,7 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
             } 
             for unit in units
         ]
-
+        
         html = render_to_string(
             "reservations_table.html",
             {
@@ -638,15 +639,12 @@ def check_category_availability():
     # return true/false?
 
 def reservation_details(request):
-     # Extract parameters from the query string TO DO
-    #start_date = request.GET.get('start')
-    #end_date = request.GET.get('end')
+     # Extract parameters from the query string 
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
     category_id = request.GET.get('category')
-    #user_timezone = request.GET.get('category') #TO DO
+    #user_timezone = request.GET.get('category') #TODO
 
-    # just to continue - to be fixed
-    start_date = "2024-03-26 10:00"
-    end_date = "2024-03-26 13:00"
 
     # Use the category_id to get the Category object and its name
     category = None
@@ -711,7 +709,7 @@ def confirm_reservation(request, token):
         else:
             # Link is still valid, confirm the reservation
             reservation.status = 'confirmed'
-            #reservation.save()
+            reservation.save()
             print("reservation saved")
 
             # Identify and reserve slots
