@@ -176,7 +176,6 @@ def edit_category(request, offer_id=None, category_id=None):
             {
                 "units": units,
                 "hours": hours,
-                
             },
             request=request,
         )
@@ -202,46 +201,44 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     offer = get_object_or_404(Offer, pk=offer_id)
     category = get_object_or_404(Category, pk=category_id)
     hours = [time(hour=h) for h in range(24)]
-    
+
     units = Unit.objects.filter(belongs_to_category=category)
-    
-    #TODO dynamic time, not just today
+
+    # TODO dynamic time, not just today
     today = timezone.localdate()
-    print("dnesek ",today)
-    #print("calling ensure availability")
-    ensure_availability_for_day(today,category_id)#TODO
-    
+    print("dnesek ", today)
+    # print("calling ensure availability")
+    ensure_availability_for_day(today, category_id)  # TODO
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         selected_date_str = request.GET.get("selected_date")
         # Make sure to parse the selected_date_str to a datetime.date object correctly
         selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-        
+
         # Find the start and end of the selected date using the correctly parsed selected_date
         start_of_day = datetime.combine(selected_date, time.min)
         end_of_day = datetime.combine(selected_date, time.max)
-        
+
         # Adjust your query to include ReservationSlots based on the selected date
         # and their relationship to the filtered units
         units_with_slots = [
             {
                 "unit": unit,
                 "reservation_slots": unit.reservation_slots.filter(
-                    start_time__gte=start_of_day, 
-                    start_time__lte=end_of_day
-                ).order_by('start_time')
-            } 
+                    start_time__gte=start_of_day, start_time__lte=end_of_day
+                ).order_by("start_time"),
+            }
             for unit in units
         ]
-        
+
         html = render_to_string(
             "reservations_table.html",
             {
                 "units_with_slots": units_with_slots,
                 "hours": hours,
-                "category_name":category.category_name,
-                "category_id":category_id,
-                "unit_id":2
+                "category_name": category.category_name,
+                "category_id": category_id,
+                "unit_id": 2,
             },
             request=request,
         )
@@ -639,17 +636,17 @@ def check_category_availability():
     pass
     # return true/false?
 
-def reservation_details(request):
-     # Extract parameters from the query string 
-    start_date = request.GET.get('start')
-    end_date = request.GET.get('end')
-    category_id = request.GET.get('category')
-    #user_timezone = request.GET.get('category') #TODO
 
+def reservation_details(request):
+    # Extract parameters from the query string
+    start_date = request.GET.get("start")
+    end_date = request.GET.get("end")
+    category_id = request.GET.get("category")
+    # user_timezone = request.GET.get('category') #TODO
 
     # Use the category_id to get the Category object and its name
     category = None
-    category_name = ''
+    category_name = ""
     if category_id:
         try:
             category = Category.objects.get(pk=category_id)
@@ -659,14 +656,15 @@ def reservation_details(request):
 
     # Prepare the context
     context = {
-        'start_date': start_date,
-        'end_date': end_date,
-        'category_name': category_name,
-        'category_id': category_id,  # Assuming you want to pass the ID for form submission
+        "start_date": start_date,
+        "end_date": end_date,
+        "category_name": category_name,
+        "category_id": category_id,  # Assuming you want to pass the ID for form submission
         #'user_timezone': user_timezone
     }
 
-    return render(request, 'reservation_details.html', context)
+    return render(request, "reservation_details.html", context)
+
 
 def verify_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
@@ -675,42 +673,53 @@ def verify_reservation(request, token):
     category_name = reservation.belongs_to_category.category_name
     customer_email = reservation.customer_email
     status = reservation.status  # Retrieve the reservation status
-    print("status je",status)
+    print("status je", status)
 
     context = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'category_name': category_name,
-            'reservation': reservation,
-            'token': token,
-            'customer_email':customer_email,
-            'status': status, 
-        }
+        "start_date": start_date,
+        "end_date": end_date,
+        "category_name": category_name,
+        "reservation": reservation,
+        "token": token,
+        "customer_email": customer_email,
+        "status": status,
+    }
 
     # Pass context to the template
-    return render(request, 'reservation_confirm_cancel.html', context)
+    return render(request, "reservation_confirm_cancel.html", context)
+
 
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.db.models import F, ExpressionWrapper, DateTimeField
 
+
 @require_POST
 def confirm_reservation(request, token):
     try:
         # Attempt to retrieve the reservation using the provided token
-        reservation = Reservation.objects.get(verification_token=token, status='pending')
-        
+        reservation = Reservation.objects.get(
+            verification_token=token, status="pending"
+        )
+        context = {
+            "header": "Reservation Confirmation",
+            "message": "Your reservation has been successfully confirmed.",
+        }
         # Check if the link has expired (more than 1 hour since submission)
-        if timezone.now() - reservation.submission_time > timedelta(hours=1): # 1 hour before the link expires
+        if timezone.now() - reservation.submission_time > timedelta(
+            hours=1
+        ):  # 1 hour before the link expires
             # Link has expired
-            reservation.status = 'cancelled'  # Optionally update the status to 'expired'
+            reservation.status = (
+                "cancelled"  # Optionally update the status to 'expired'
+            )
             reservation.save()  # Save the updated status
-            return HttpResponse('This reservation link has expired.')
+            return HttpResponse("This reservation link has expired.")
         else:
             # Link is still valid, confirm the reservation
-            reservation.status = 'confirmed'
-            #reservation.save()
+            reservation.status = "confirmed"
+            reservation.save()
             print("reservation saved")
 
             # Identify and reserve slots
@@ -718,25 +727,33 @@ def confirm_reservation(request, token):
                 unit__belongs_to_category=reservation.belongs_to_category,
                 start_time__gte=reservation.reservation_from,
                 end_time__lte=reservation.reservation_to,
-                status='available'
+                status="available",
             )
-            
-            reservation_slots.update(status='reserved')
+
+            reservation_slots.update(status="reserved")
             print("slots updated")
-            
+
             delete_available_slots_for_category(reservation.belongs_to_category)
 
-            return HttpResponse('Your reservation is confirmed. Thank you!')
+            return render(request, "reservation_status.html", context)
+        
     except Reservation.DoesNotExist:
-        return HttpResponse('Invalid or expired link.')
+        return HttpResponse("Invalid or expired link.")
+
 
 @require_POST
 def cancel_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
-    reservation.status = 'cancelled'
+    reservation.status = "cancelled"
     reservation.save()
+
+    context = {
+        'header': 'Reservation Cancelled',
+        'message': 'Your reservation has been successfully cancelled.'
+    }
     # Redirect to a cancellation confirmation page or similar
-    return HttpResponse('The reservation was cancelled')
+    return render(request, "reservation_status.html", context)
+
 
 import uuid
 from django.http import HttpResponse
@@ -744,27 +761,27 @@ from .models import Reservation
 from django.core.mail import send_mail
 from django.conf import settings
 
+
 def submit_reservation(request):
     print("submitting reservation")
-    if request.method == 'POST':
-        customer_name = request.POST.get('name')
-        customer_email = request.POST.get('email')
+    if request.method == "POST":
+        customer_name = request.POST.get("name")
+        customer_email = request.POST.get("email")
         # Assuming you retrieve these from the form or as parameters
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        category_id = request.POST.get('category_id')
-        print("cat id",category_id)
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+        category_id = request.POST.get("category_id")
+        print("cat id", category_id)
         category = get_object_or_404(Category, pk=category_id)
         token = uuid.uuid4().hex
         submission_time = timezone.now()
-        
+
         """user_timezone = request.POST.get('user_timezone', 'UTC')  # Default to UTC if not provided
         submission_time = timezone.now()
         
         # Convert submission_time to the user's timezone
         user_tz = pytz.timezone(user_timezone)
         localized_submission_time = submission_time.astimezone(user_tz)"""
-        
 
         reservation = Reservation(
             customer_name=customer_name,
@@ -773,12 +790,12 @@ def submit_reservation(request):
             reservation_to=end_date,
             verification_token=token,
             belongs_to_category=category,
-            status='pending',
-            submission_time = submission_time
+            status="pending",
+            submission_time=submission_time,
         )
         reservation.save()
 
-        verification_link = request.build_absolute_uri(f'/verify_reservation/{token}/')
+        verification_link = request.build_absolute_uri(f"/verify_reservation/{token}/")
         email_body = f"""
         Hello {customer_name},
 
@@ -794,28 +811,38 @@ def submit_reservation(request):
         """
 
         send_mail(
-            f'Verify your reservation for {category.category_name}',
+            f"Verify your reservation for {category.category_name}",
             email_body,
             settings.DEFAULT_FROM_EMAIL,
             [customer_email],
             fail_silently=False,
         )
-        return HttpResponse(f'Please check your email "{customer_email}" to confirm the reservation.')
+        success_message = (
+            f'Please check your email "{customer_email}" to confirm the reservation.'
+        )
+        messages.success(request, success_message)
+        context = {
+            'header': 'Reservation Submitted',
+            'message': f'Please check your email "{customer_email}" to confirm the reservation.'
+        }
+        return render(request, "reservation_status.html")
+
 
 def create_slots_for_unit(unit, day):
     """
     Create reservation slots for the given unit and day.
     """
-    start_time = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
+    start_time = timezone.make_aware(
+        timezone.datetime.combine(day, timezone.datetime.min.time())
+    )
     end_time = start_time + timedelta(days=1)
 
     while start_time < end_time:
         ReservationSlot.objects.create(
-            unit=unit,
-            start_time=start_time,
-            status="available"
+            unit=unit, start_time=start_time, status="available"
         )
         start_time += timedelta(minutes=30)  # Assuming 30-minute slots
+
 
 def ensure_availability_for_day(day, category_id):
     """
@@ -823,15 +850,17 @@ def ensure_availability_for_day(day, category_id):
     If not, create a new unit and slots for it within the specified category.
     """
     # Fetch the category
-    print("cat ID",category_id)
-    belongs_to_category = get_object_or_404(Category, pk=category_id) 
+    print("cat ID", category_id)
+    belongs_to_category = get_object_or_404(Category, pk=category_id)
     print(belongs_to_category)
     # Check for fully available units within the category for the given day
-    fully_available_units = Unit.objects.filter(belongs_to_category=belongs_to_category).exclude(
+    fully_available_units = Unit.objects.filter(
+        belongs_to_category=belongs_to_category
+    ).exclude(
         reservation_slots__start_time__date=day,
-        reservation_slots__status__in=["reserved", "maintenance"]
+        reservation_slots__status__in=["reserved", "maintenance"],
     )
-    
+
     if not fully_available_units.exists():
         # Create a new unit within the category
         new_unit = Unit.objects.create(belongs_to_category=belongs_to_category)
@@ -844,21 +873,22 @@ def ensure_availability_for_day(day, category_id):
         if not ReservationSlot.objects.filter(unit=unit, start_time__date=day).exists():
             create_slots_for_unit(unit, day)
 
+
 def delete_available_slots_for_category(category):
     # Fetch all Unit objects associated with the target Category
     units_in_category = Unit.objects.filter(belongs_to_category=category)
-    
+
     # Count the slots before deletion for logging or debugging purposes
     slots_before_deletion = ReservationSlot.objects.filter(
-        unit__in=units_in_category,
-        status='available'
+        unit__in=units_in_category, status="available"
     ).count()
 
     # Delete all available slots in these units
     deleted_slots_count = ReservationSlot.objects.filter(
-        unit__in=units_in_category,
-        status='available'
+        unit__in=units_in_category, status="available"
     ).delete()
 
     # Logging the result
-    print(f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'.")
+    print(
+        f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'."
+    )

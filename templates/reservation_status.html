@@ -1,0 +1,14 @@
+{% extends 'main.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container-md d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="text-center" style="max-width: 600px;">
+        <h1 class="mb-3">{{ header }}</h1>
+        <p class="lead">{{ message }}</p>
+    </div>
+    <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i> <!-- Checkmark icon -->
+
+</div>
+
+{% endblock %}
