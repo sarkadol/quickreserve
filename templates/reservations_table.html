@@ -20,14 +20,14 @@
 
             <td class="clickable-cell" data-unit-id="{{ unit.unit.id }}" data-hour="{{ hour|time:'H' }}" data-category-name="{{ category_name }}" data-category-id="{{ category_id }}">
                 <!-- Content here -->
-                _
+                {% if slot.status == "reserved" %} R {% else %} _ {% endif %}
             </td>
 
             {% endfor %}
         </tr>
         {% endfor %}
         {% else %}
-        <td>There are no units yet</td>
+        <td>There are no units yet</td><!-- This should be never displayed as the units are dynamically created-->
         {% endif %}
     </tbody>
 </table>
