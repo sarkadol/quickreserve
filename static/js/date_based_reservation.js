@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const startTime = parseInt(startCell.getAttribute('data-hour'), 10);
         const endTime = parseInt(endCell.getAttribute('data-hour'), 10); 
         const formattedStartTime = new Date(dateObject.setHours(startTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false });
-        const formattedEndTime = new Date(dateObject.setHours(endTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        const formattedEndTime = new Date(dateObject.setHours(endTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false });
 
         document.getElementById('selected-date-info').textContent = formattedDate;
         document.getElementById('start-time-info').textContent = formattedStartTime;

@@ -205,17 +205,17 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
     units = Unit.objects.filter(belongs_to_category=category)
 
     # TODO dynamic time, not just today
-    #today = timezone.localdate()
-   # print("dnesek ", today)
+    # today = timezone.localdate()
+    # print("dnesek ", today)
     # print("calling ensure availability")
-    #ensure_availability_for_day(today, category_id)  # TODO
+    # ensure_availability_for_day(today, category_id)  # TODO
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         selected_date_str = request.GET.get("selected_date")
         # Make sure to parse the selected_date_str to a datetime.date object correctly
         selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
 
-         # Call ensure_availability_for_day with the selected date
+        # Call ensure_availability_for_day with the selected date
         ensure_availability_for_day(selected_date, category_id)
         print("ensure availability ", selected_date)
         # Find the start and end of the selected date using the correctly parsed selected_date
@@ -233,6 +233,9 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
             }
             for unit in units
         ]
+        for unit_with_slots in units_with_slots:
+            for slot in unit_with_slots['reservation_slots']:
+                print(f"Unit: {unit_with_slots['unit'].id}, Slot: {slot.start_time}, Status: {slot.status}")
 
         html = render_to_string(
             "reservations_table.html",
@@ -554,7 +557,7 @@ def create_reservation_slot(reservation):
         if slots.exists():
             for slot in slots:
                 # Calculate the proposed end time based on the slot's start time and duration.
-                #proposed_end_time = slot.start_time + timedelta(minutes=slot.duration)
+                # proposed_end_time = slot.start_time + timedelta(minutes=slot.duration)
 
                 # Check if the reservation fits in the slot without overlapping with the next slot.
                 next_slot = slots.filter(start_time__gt=slot.start_time).first()
@@ -584,7 +587,7 @@ def create_reservation_slot(reservation):
         # there are no slots yet
         else:
             # Calculate total required slots to cover the reservation
-            slot_duration = timedelta(minutes=30)
+            slot_duration = timedelta(minutes=60)
             reservation_duration = (
                 reservation.reservation_to - reservation.reservation_from
             )
@@ -623,17 +626,19 @@ def assign_reservation():
 
 
 def create_unit(category):
-    #category = reservation.belongs_to_category
-    print("unit count",category.get_unit_count())
+    # category = reservation.belongs_to_category
+    print("unit count", category.get_unit_count())
     if category.get_unit_count() < category.count_of_units:
         unit = Unit.objects.create(
-            #unit_name="z23",  # Provide the unit name here - to be done
+            # unit_name="z23",  # Provide the unit name here - to be done
             belongs_to_category=category,  # Assign the category instance
         )
         unit.save()
         print("unit created")  # to be done - messages
+        return unit
     else:
         print("max units reached")  # to be done - messages
+        return None
 
 
 def check_category_availability():
@@ -699,6 +704,8 @@ from django.views.decorators.http import require_POST
 from django.db.models import F, ExpressionWrapper, DateTimeField
 
 from django.db.models import Count
+
+
 @require_POST
 def confirm_reservation(request, token):
     try:
@@ -740,11 +747,18 @@ def confirm_reservation(request, token):
 
             # Optional: Add logic here to choose a specific unit based on your criteria
             # For simplicity, let's select a unit with the least number of reserved slots
-            unit_to_reserve = available_slots.values('unit').annotate(total=Count('unit')).order_by('total').first()
+            unit_to_reserve = (
+                available_slots.values("unit")
+                .annotate(total=Count("unit"))
+                .order_by("total")
+                .first()
+            )
 
             if unit_to_reserve:
                 # Reserve slots only for the selected unit
-                available_slots.filter(unit_id=unit_to_reserve['unit']).update(status="reserved")
+                available_slots.filter(unit_id=unit_to_reserve["unit"]).update(
+                    status="reserved"
+                )
 
                 # Optional: Perform any additional steps such as deleting available slots for the category
                 delete_available_slots_for_category(reservation.belongs_to_category)
@@ -771,10 +785,11 @@ def cancel_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = "cancelled"
     reservation.save()
+    delete_available_slots_for_category(reservation.belongs_to_category)
 
     context = {
-        'header': 'Reservation cancelled',
-        'message': 'Your reservation has been successfully cancelled.'
+        "header": "Reservation cancelled",
+        "message": "Your reservation has been successfully cancelled.",
     }
     # Redirect to a cancellation confirmation page or similar
     return render(request, "reservation_status.html", context)
@@ -842,29 +857,34 @@ def submit_reservation(request):
             [customer_email],
             fail_silently=False,
         )
-        #success_message = (   f'Please check your email "{customer_email}" to confirm the reservation.' )
-        #messages.success(request, success_message)
+        # success_message = (   f'Please check your email "{customer_email}" to confirm the reservation.' )
+        # messages.success(request, success_message)
         context = {
-            'header': 'Reservation submitted',
-            'message': f'Please check your email "{customer_email}" to confirm the reservation.'
+            "header": "Reservation submitted",
+            "message": f'Please check your email "{customer_email}" to confirm the reservation.',
         }
         return render(request, "reservation_status.html", context)
 
 
 def create_slots_for_unit(unit, day):
     """
-    Create reservation slots for the given unit and day.
+    Create reservation slots for the given unit and day, ensuring there's a slot for each hour
+    where a slot doesn't already exist.
     """
-    start_time = timezone.make_aware(
-        timezone.datetime.combine(day, timezone.datetime.min.time())
-    )
-    end_time = start_time + timedelta(days=1)
+    # Define the start and end times for the day
+    start_of_day = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
+    end_of_day = start_of_day + timedelta(days=1)
 
-    while start_time < end_time:
-        ReservationSlot.objects.create(
-            unit=unit, start_time=start_time, status="available"
-        )
-        start_time += timedelta(minutes=30)  # Assuming 30-minute slots
+    current_time = start_of_day
+    while current_time < end_of_day:
+        # Check if a slot exists for the current hour
+        if not ReservationSlot.objects.filter(unit=unit, start_time=current_time).exists():
+            # Create an available slot if none exists for the current hour
+            ReservationSlot.objects.create(
+                unit=unit, start_time=current_time, status="available"
+            )
+        # Move to the next hour
+        current_time += timedelta(hours=1)  # Adjust this if you want slots of a different duration
 
 
 def ensure_availability_for_day(day, category_id):
@@ -881,22 +901,24 @@ def ensure_availability_for_day(day, category_id):
         belongs_to_category=belongs_to_category
     ).exclude(
         reservation_slots__start_time__date=day,
-        reservation_slots__status__in=["reserved", "maintenance","pending"],
+        reservation_slots__status__in=["reserved", "maintenance", "pending"],
     )
 
     if not fully_available_units.exists():
-        # Create a new unit within the category
-        #new_unit = Unit.objects.create(belongs_to_category=belongs_to_category) #placeholder
-        #print("creating new unit")
-        new_unit=create_unit(belongs_to_category) #TODO what if I cannot create more units bcs I reached the max count?
+        new_unit = create_unit(belongs_to_category)
 
-        # Create slots for the new unit
-        create_slots_for_unit(new_unit, day)
+        # Only attempt to create slots if a new unit was successfully created
+        if new_unit:
+            create_slots_for_unit(new_unit, day)
+        else:
+            # Log or handle the case where no new unit can be created, and no slots will be added
+            print(
+                "No new unit could be created. Maximum unit count reached or other error."
+            )
 
     # Ensure slots are created for all units in the category which do not have slots on the given day
     for unit in Unit.objects.filter(belongs_to_category=belongs_to_category):
-        if not ReservationSlot.objects.filter(unit=unit, start_time__date=day).exists():
-            create_slots_for_unit(unit, day)
+        create_slots_for_unit(unit, day)
 
 
 def delete_available_slots_for_category(category):

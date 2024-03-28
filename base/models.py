@@ -95,7 +95,7 @@ class ReservationSlot(models.Model):
     )
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.DurationField(default=timedelta(minutes=30))
+    duration = models.DurationField(default=timedelta(minutes=60))
 
     # Consider including a status field as suggested previously
     status = models.CharField(
@@ -106,6 +106,13 @@ class ReservationSlot(models.Model):
             ("maintenance", "Maintenance"),
         ],
     )
+
+    class Meta:
+        unique_together = (
+            "unit",
+            "start_time",
+        )  # two reservation slots cannost start at the same time in the same unit
+
     def save(self, *args, **kwargs):
         # Automatically calculate end_time before saving
         if not self.end_time:
