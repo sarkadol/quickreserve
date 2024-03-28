@@ -4,8 +4,6 @@ from django.contrib import admin
 
 from . import models 
 
-
-
 # Custom admin for ReservationSlot
 class ReservationSlotAdmin(admin.ModelAdmin):
     list_display = ('unit', 'start_time', 'end_time', 'status', 'display_unit_category')
@@ -17,8 +15,6 @@ class ReservationSlotAdmin(admin.ModelAdmin):
 
 # Register your models here
 admin.site.register(models.ReservationSlot, ReservationSlotAdmin)
-# Register other models as needed, potentially with custom ModelAdmin classes
-
 # admin.site.register(models.Assigned)
 admin.site.register(models.UserRole)
 admin.site.register(models.Offer)

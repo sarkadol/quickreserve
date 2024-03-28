@@ -17,12 +17,18 @@
         <tr>
             <td>{{ unit.unit.unit_name }} {{ unit.unit.id }}</td>
             {% for slot in unit.reservation_slots %}
+            
+            {% if slot.status == "reserved" %}
+            <td class="clickable-cell slot-reserved bg-danger" data-unit-id="{{ unit.unit.id }}"
+                data-hour="{{ slot.start_time|date:'H' }}" data-category-name="{{ category_name }}"
+                data-category-id="{{ category_id }}">
+                R
+                {% else %}
             <td class="clickable-cell" data-unit-id="{{ unit.unit.id }}" data-hour="{{ slot.start_time|date:'H' }}"
                 data-category-name="{{ category_name }}" data-category-id="{{ category_id }}">
-                <!-- Adjusted Content Display Logic Here -->
-                {% if slot.status == "reserved" %} R {% else %} * {% endif %}
-            </td>
-            {% endfor %}
+                *
+                {% endif %}
+                {% endfor %}
         </tr>
         {% endfor %}
         {% else %}
