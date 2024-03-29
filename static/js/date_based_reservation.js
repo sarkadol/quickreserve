@@ -36,13 +36,17 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     const form = document.getElementById('date-form');
     //console.log("Form found:", form);
+    
+
+    
 
     if (form) {
         form.addEventListener('submit', function (event) {
+            console.log("submitting form")
             event.preventDefault();
             resetSelection();
             const selectedDate = this.elements['selected_date'].value;
-            //console.log("Selected date:", selectedDate);
+            console.log("Selected date:", selectedDate);
 
             fetch(`?selected_date=${selectedDate}`, {
                 headers: {
@@ -59,8 +63,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 })
                 .catch(error => console.error('Error loading the table:', error));
         });
+        // Automatically submit the form when the date changes
+        document.getElementById('dateInput').addEventListener('change', () => {
+            form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+        });
     }
-
+    
     const updateSelectionDisplay = () => {
         if (!startCell || !endCell) return;
 
@@ -100,6 +108,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         //console.log("Range highlighted.");
     }
 
+    // Simulate form submission to load the reservation table
+    form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+    
     function attachClickableCellListeners() {
         const table = document.getElementById('reservation-table');
         //console.log("Table found:", table);
@@ -139,6 +150,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
                         startCell = cell;
                         cell.style.backgroundColor = '#ccffcc';
                     } else if (!endCell && cell.cellIndex > startCell.cellIndex) {
+                        // Check for any reserved slots between start and end selection
+                        let isSelectionValid = true;
+                        let testCell = startCell.nextElementSibling;
+                        while (testCell && testCell !== cell.nextElementSibling) {
+                            if (testCell.classList.contains('slot-reserved')) {
+                                isSelectionValid = false;
+                                break;
+                            }
+                            testCell = testCell.nextElementSibling;
+                        }
+
+                        if (!isSelectionValid) {
+                            console.log("Selection includes a reserved slot, resetting selection.");
+                            resetSelection();
+                            return;
+                        }
                         endCell = cell;
                         cell.style.backgroundColor = '#ccffcc';
                         highlightRange(startCell, endCell);
@@ -172,6 +199,26 @@ document.addEventListener('DOMContentLoaded', (event) => {
         window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
     });
     
+    document.getElementById('prevDay').addEventListener('click', function() {
+        adjustDate(-1);
+    });
+
+    document.getElementById('nextDay').addEventListener('click', function() {
+        adjustDate(1);
+    });
+    function adjustDate(days) {
+        var dateInput = document.getElementById('dateInput');
+        var currentDate = new Date(dateInput.value);
+        currentDate.setDate(currentDate.getDate() + days);
+    
+        var year = currentDate.getFullYear();
+        var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Adds leading zero
+        var day = ('0' + currentDate.getDate()).slice(-2); // Adds leading zero
+    
+        dateInput.value = `${year}-${month}-${day}`;
+        // Programmatically submit the form
+        document.getElementById('date-form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+    }
 
     // Invoke these functions at the end to ensure they are attached at the start.
     
