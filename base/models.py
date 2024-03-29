@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
+import datetime
 
 # Create your models here.
 
@@ -58,6 +59,8 @@ class Category(models.Model):
     count_of_units = models.IntegerField(default=1)
     created_at = models.DateTimeField(default=timezone.now)
     # last_edited_at
+    opening_time = models.TimeField(default=datetime.time(0, 0))
+    closing_time = models.TimeField(default=datetime.time(23, 59,59)) #TODO 24:00 and default values 9:23-9:23
 
     belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
     category_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE, null=True)

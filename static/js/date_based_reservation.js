@@ -177,6 +177,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 }
             });
         }
+        const clickableCells = document.querySelectorAll('.clickable-cell');
+        clickableCells.forEach(cell => {
+            // Existing click event listener code here
+
+            cell.addEventListener('mouseenter', function() {
+                if (!this.style.backgroundColor) { // Only change color if not part of a selection
+                    this.style.backgroundColor = 'lightblue';
+                }
+            });
+
+            cell.addEventListener('mouseleave', function() {
+                if (this.style.backgroundColor === 'lightblue') { // Reset only if it was changed on hover
+                    this.style.backgroundColor = ''; // Reset to default or you can set it to the initial color
+                }
+            });
+        });
     }
 
     document.getElementById('nextButton').addEventListener('click', () => {

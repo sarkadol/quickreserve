@@ -200,15 +200,12 @@ def edit_category(request, offer_id=None, category_id=None):
 def new_reservation_timetable(request, offer_id=None, category_id=None):
     offer = get_object_or_404(Offer, pk=offer_id)
     category = get_object_or_404(Category, pk=category_id)
-    hours = [time(hour=h) for h in range(24)]
+    opening_hour = category.opening_time.hour
+    closing_hour = category.closing_time.hour
+    hours = [time(hour=h) for h in range(opening_hour, closing_hour + 1)]
 
     units = Unit.objects.filter(belongs_to_category=category)
 
-    # TODO dynamic time, not just today
-    # today = timezone.localdate()
-    # print("dnesek ", today)
-    # print("calling ensure availability")
-    # ensure_availability_for_day(today, category_id)  # TODO
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         selected_date_str = request.GET.get("selected_date")
@@ -866,17 +863,17 @@ def submit_reservation(request):
         return render(request, "reservation_status.html", context)
 
 
-def create_slots_for_unit(unit, day):
+def create_slots_for_unit(unit, day, opening_time, closing_time):
     """
     Create reservation slots for the given unit and day, ensuring there's a slot for each hour
-    where a slot doesn't already exist.
+    within the opening and closing times where a slot doesn't already exist.
     """
-    # Define the start and end times for the day
-    start_of_day = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
-    end_of_day = start_of_day + timedelta(days=1)
+    # Define the start and end times for the day based on opening and closing times
+    start_of_day = timezone.make_aware(datetime.combine(day, opening_time))
+    end_of_day = timezone.make_aware(datetime.combine(day, closing_time))
 
     current_time = start_of_day
-    while current_time < end_of_day:
+    while current_time <= end_of_day:
         # Check if a slot exists for the current hour
         if not ReservationSlot.objects.filter(unit=unit, start_time=current_time).exists():
             # Create an available slot if none exists for the current hour
@@ -896,6 +893,10 @@ def ensure_availability_for_day(day, category_id):
     print("cat ID", category_id)
     belongs_to_category = get_object_or_404(Category, pk=category_id)
     print(belongs_to_category)
+
+    opening_time = belongs_to_category.opening_time
+    closing_time = belongs_to_category.closing_time
+
     # Check for fully available units within the category for the given day
     fully_available_units = Unit.objects.filter(
         belongs_to_category=belongs_to_category
@@ -909,7 +910,7 @@ def ensure_availability_for_day(day, category_id):
 
         # Only attempt to create slots if a new unit was successfully created
         if new_unit:
-            create_slots_for_unit(new_unit, day)
+            create_slots_for_unit(new_unit, day, opening_time, closing_time)
         else:
             # Log or handle the case where no new unit can be created, and no slots will be added
             print(
@@ -918,7 +919,7 @@ def ensure_availability_for_day(day, category_id):
 
     # Ensure slots are created for all units in the category which do not have slots on the given day
     for unit in Unit.objects.filter(belongs_to_category=belongs_to_category):
-        create_slots_for_unit(unit, day)
+        create_slots_for_unit(unit, day, opening_time, closing_time)
 
 
 def delete_available_slots_for_category(category):

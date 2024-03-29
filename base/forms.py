@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django import forms
 
-#import datetime
+# import datetime
 
 TIME_CHOICES = [
     (
@@ -19,12 +19,13 @@ TIME_CHOICES = [
 class ReservationForm(forms.ModelForm):
     # Manually add non-model fields for separate date and time inputs
     reservation_date_from = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date","value": datetime.now().date()})
+        widget=forms.DateInput(attrs={"type": "date", "value": datetime.now().date()})
     )
     reservation_time_from = forms.TimeField(widget=forms.Select(choices=TIME_CHOICES))
     reservation_date_to = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date","value": datetime.now().date()}), required=False
-    ) 
+        widget=forms.DateInput(attrs={"type": "date", "value": datetime.now().date()}),
+        required=False,
+    )
     reservation_time_to = forms.TimeField(
         widget=forms.Select(choices=TIME_CHOICES), required=False
     )
@@ -38,7 +39,7 @@ class ReservationForm(forms.ModelForm):
             "belongs_to_category",
             "status",
         ]
-        
+
         # Exclude the DateTime fields here, handle them separately in the view
         exclude = [
             "confirmed_by_manager",
@@ -49,20 +50,22 @@ class ReservationForm(forms.ModelForm):
             "reservation_from",
             "reservation_to",
         ]
+
     def __init__(self, *args, **kwargs):
         super(ReservationForm, self).__init__(*args, **kwargs)
-        
+
         # Example hardcoded time choice, e.g., "15:00" for 3 PM
         hardcoded_time_from = "15:00"
         hardcoded_time_to = "16:00"  # Example, one hour later, e.g., "16:00" for 4 PM
 
         # Set initial date to today. This can be hardcoded as well if needed
-        self.fields['reservation_date_from'].initial = timezone.localdate()
-        self.fields['reservation_date_to'].initial = timezone.localdate()
+        self.fields["reservation_date_from"].initial = timezone.localdate()
+        self.fields["reservation_date_to"].initial = timezone.localdate()
 
         # Set the initial time fields to hardcoded values
-        self.fields['reservation_time_from'].initial = hardcoded_time_from
-        self.fields['reservation_time_to'].initial = hardcoded_time_to
+        self.fields["reservation_time_from"].initial = hardcoded_time_from
+        self.fields["reservation_time_to"].initial = hardcoded_time_to
+
 
 # class ReservationUpdateForm - to be done
 
@@ -86,7 +89,7 @@ class OfferForm(ModelForm):
                 attrs={
                     "type": "date",
                     #'min': datetime.now().date(),
-                    "value": datetime.now().date()+ timedelta(days=1),
+                    "value": datetime.now().date() + timedelta(days=1),
                 }
             ),
         }
@@ -99,6 +102,9 @@ class CategoryForm(ModelForm):
             "belongs_to_offer",
             "created_at",
             "category_pricing",
+            "category_capacity",  
+            # by now the system allows only 1:1 reservations 
+            #(not e g seminars, where more people can make a reservation for one time)
         ]  # limiting the fields if that are displayed
         widgets = {
             "additional_time": widgets.DateInput(
