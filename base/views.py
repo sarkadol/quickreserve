@@ -58,12 +58,10 @@ def create_offer(request, offer_id=None):
             # Custom validation to check if available_from is before available_to
             available_from = form.cleaned_data["available_from"]
             available_to = form.cleaned_data["available_to"]
-            print("je validni")
             if available_from and available_to and available_from >= available_to:
                 error_message = "Available from date must be before available to date."
                 messages.error(request, error_message)
                 return render(request, "create_offer.html", context={"form": form})
-
             offer.save()  # Save the offer to the database
             offer_id = offer.id
 
@@ -206,7 +204,6 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
 
     units = Unit.objects.filter(belongs_to_category=category)
 
-
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         selected_date_str = request.GET.get("selected_date")
         # Make sure to parse the selected_date_str to a datetime.date object correctly
@@ -231,8 +228,10 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
             for unit in units
         ]
         for unit_with_slots in units_with_slots:
-            for slot in unit_with_slots['reservation_slots']:
-                print(f"Unit: {unit_with_slots['unit'].id}, Slot: {slot.start_time}, Status: {slot.status}")
+            for slot in unit_with_slots["reservation_slots"]:
+                print(
+                    f"Unit: {unit_with_slots['unit'].id}, Slot: {slot.start_time}, Status: {slot.status}"
+                )
 
         html = render_to_string(
             "reservations_table.html",
@@ -852,7 +851,8 @@ def submit_reservation(request):
             email_body,
             settings.DEFAULT_FROM_EMAIL,
             [customer_email],
-            fail_silently=False,
+            fail_silently=False,  
+            # fail_silently=False means your application wants to be informed of any problems during the email sending process
         )
         # success_message = (   f'Please check your email "{customer_email}" to confirm the reservation.' )
         # messages.success(request, success_message)
@@ -875,13 +875,17 @@ def create_slots_for_unit(unit, day, opening_time, closing_time):
     current_time = start_of_day
     while current_time <= end_of_day:
         # Check if a slot exists for the current hour
-        if not ReservationSlot.objects.filter(unit=unit, start_time=current_time).exists():
+        if not ReservationSlot.objects.filter(
+            unit=unit, start_time=current_time
+        ).exists():
             # Create an available slot if none exists for the current hour
             ReservationSlot.objects.create(
                 unit=unit, start_time=current_time, status="available"
             )
         # Move to the next hour
-        current_time += timedelta(hours=1)  # Adjust this if you want slots of a different duration
+        current_time += timedelta(
+            hours=1
+        )  # Adjust this if you want slots of a different duration
 
 
 def ensure_availability_for_day(day, category_id):
