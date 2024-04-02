@@ -7,7 +7,7 @@ from .forms import LoginForm,RegisterForm
 def sign_up(request):
     if request.method == 'GET':
         form = RegisterForm()
-        return render(request, 'register.html', {'form': form})    
+        return render(request, 'users/register.html', {'form': form})    
    
     if request.method == 'POST':
         form = RegisterForm(request.POST) 
@@ -19,13 +19,13 @@ def sign_up(request):
             login(request, user)
             return redirect('manager_home')
         else:
-            return render(request, 'register.html', {'form': form})
+            return render(request, 'users/register.html', {'form': form})
 
 def sign_in(request):
 
     if request.method == 'GET':
         form = LoginForm()
-        return render(request,'login.html', {'form': form})
+        return render(request,'users/login.html', {'form': form})
     
     elif request.method == 'POST':
         form = LoginForm(request.POST)
@@ -41,7 +41,7 @@ def sign_in(request):
         
         # form is not valid or user is not authenticated
         messages.error(request,f' Invalid username or password')
-        return render(request,'login.html',{'form': form})
+        return render(request,'users/login.html',{'form': form})
     
 def sign_out(request):
     logout(request)
