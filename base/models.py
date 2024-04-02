@@ -37,6 +37,13 @@ class Offer(models.Model):
 
     def __str__(self):
         return self.offer_name  # rewrites Offer object (x) to its name in admi panel
+    
+    class Meta:
+        unique_together = (
+            "offer_name",
+            "manager_of_this_offer",
+        )  # there cannot be two same named offers managed by the same user
+
 
 
 class Pricing(models.Model):

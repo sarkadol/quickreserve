@@ -1,18 +1,26 @@
 {% extends 'main.html' %}
-{% include 'messages.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
+
 {% block content %}
-
-<div class="container-md">
-
-    <form method="POST" novalidate>
-        {% csrf_token %}
-        <h2>Login</h2>
-        {{form.as_p}}
-        <input type="submit" class="btn btn-outline-success" value="Login" />
-        <p>Don't have an account? <a href="{%url 'register' %}">Register</a></p>
-        <p>Forgot your password? <a href="{%url 'password-reset' %}">Reset password</a></p>
-
-    </form>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6"> <!-- Adjusted column size for the login form -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Login</h5>
+                    <form method="POST" novalidate class="form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="mb-3">
+                            <input type="submit" class="btn btn-outline-success" value="Login" />
+                        </div>
+                        <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+                        <p>Forgot your password? <a href="{% url 'password-reset' %}">Reset password</a></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

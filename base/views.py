@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.http import HttpResponse
 import pytz
@@ -9,6 +10,8 @@ from django.utils import timezone
 from .models import Offer, Category, Unit, Reservation, ReservationSlot
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from django.http import HttpResponseNotFound
+from django.views.defaults import page_not_found
 
 # https://www.pythontutorial.net/django-tutorial/django-password-reset/ to be done
 
@@ -49,12 +52,9 @@ def create_offer(request, offer_id=None):
     if request.method == "POST":
         form = forms.OfferForm(request.POST)
         if form.is_valid():
-            offer = form.save(
-                commit=False
-            )  # should not be saved to the database immediately
-            offer.manager_of_this_offer = (
-                request.user
-            )  # Set the manager_of_this_offer to the currently signed-in user
+            offer = form.save(commit=False)
+            offer.manager_of_this_offer = request.user
+
             # Custom validation to check if available_from is before available_to
             available_from = form.cleaned_data["available_from"]
             available_to = form.cleaned_data["available_to"]
@@ -62,23 +62,26 @@ def create_offer(request, offer_id=None):
                 error_message = "Available from date must be before available to date."
                 messages.error(request, error_message)
                 return render(request, "create_offer.html", context={"form": form})
-            offer.save()  # Save the offer to the database
-            offer_id = offer.id
 
-            success_message = f"Offer '{offer.offer_name}' successfully created."
-            messages.success(request, success_message)
-
-            return render(
-                request,
-                "offer_detail.html",
-                context={"offer_id": offer_id, "form": form},
-            )  # Redirect to a success page after saving
+            try:
+                offer.save()  # Attempt to save the offer to the database
+                offer_id = offer.id
+                success_message = f"Offer '{offer.offer_name}' successfully created."
+                messages.success(request, success_message)
+                return render(
+                    request,
+                    "offer_detail.html",
+                    context={"offer_id": offer_id, "form": form},
+                )
+            except IntegrityError:
+                error_message = f"Offer with the name '{offer.offer_name}' already exists for your account. Please choose a different name."
+                messages.error(request, error_message)
+                return render(request, "create_offer.html", context={"form": form})
         else:
             error_message = "Something went wrong."
             messages.error(request, error_message)
 
     return render(request, "create_offer.html", context={"form": form})
-
 
 @login_required
 def my_schedule(request):
@@ -944,3 +947,4 @@ def delete_available_slots_for_category(category):
     print(
         f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'."
     )
+
