@@ -3,6 +3,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
     preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
     preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
 
+    //arrows by the date selection
+    document.getElementById('prevDay').addEventListener('click', function () {
+        adjustDate(-1);
+    });
+
+    document.getElementById('nextDay').addEventListener('click', function () {
+        adjustDate(1);
+    });
     // Prevent default action for buttons in clickable table rows and navigate programmatically
     function preventButtonEventPropagation(selector, basePath) {
         //console.log("prevent button")
@@ -20,12 +28,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Set today's date as the default value for the date input
     const setDateToToday = () => {
-        const date = new Date();
-        const today = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
-            .toISOString()
-            .split("T")[0];
-        document.getElementById('dateInput').value = today;
-        console.log("ISO cas ",today)
+        const dateInput = document.getElementById('dateInput');
+        // Check if the dateInput element exists
+        if (dateInput) {
+            const date = new Date();
+            const today = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
+                .toISOString()
+                .split("T")[0];
+            dateInput.value = today;
+            console.log("ISO date set to:", today);
+        } else {
+            console.log("No date input element found.");
+        }
     }
 
     setDateToToday();
@@ -36,9 +50,39 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     const form = document.getElementById('date-form');
     //console.log("Form found:", form);
-    
 
-    
+    // New fetch functionality for reservations based on category and date
+    if (document.getElementById('categorySelect')) {
+        const categorySelect = document.getElementById('categorySelect');
+        console.log("category selected: ", categorySelect.value)
+    }
+
+
+    //const categorySelect = document.getElementById('categorySelect');
+    const dateInput = document.getElementById('dateInput');
+
+    function fetchReservations() {
+        const categoryId = categorySelect.value;
+        const selectedDate = dateInput.value;
+        if (categoryId && selectedDate) {
+            const url = `my_schedule?category_id=${categoryId}&selected_date=${selectedDate}`;
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('reservation-table').innerHTML = data.html;
+                });
+        }
+    }
+    if (document.getElementById('categorySelect')) {
+        categorySelect.addEventListener('change', fetchReservations);
+    }
+
+    dateInput.addEventListener('change', fetchReservations);
+
 
     if (form) {
         form.addEventListener('submit', function (event) {
@@ -65,10 +109,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
         // Automatically submit the form when the date changes
         document.getElementById('dateInput').addEventListener('change', () => {
-            form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            console.log("date submitted")
         });
     }
-    
+
     const updateSelectionDisplay = () => {
         if (!startCell || !endCell) return;
 
@@ -77,7 +122,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const formattedDate = dateObject.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
         const startTime = parseInt(startCell.getAttribute('data-hour'), 10);
-        const endTime = parseInt(endCell.getAttribute('data-hour'), 10); 
+        const endTime = parseInt(endCell.getAttribute('data-hour'), 10);
         const formattedStartTime = new Date(dateObject.setHours(startTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false });
         const formattedEndTime = new Date(dateObject.setHours(endTime)).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false });
 
@@ -96,7 +141,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         endCell = null;
         currentUnitId = null;
         //console.log("Selection reset.");
-        document.getElementById('nextButton').disabled = true;
+        //document.getElementById('nextButton').disabled = true;
+        var nextButton = document.getElementById('nextButton');
+        if (nextButton) {
+            nextButton.disabled = true;
+        }
     }
 
     const highlightRange = (start, end) => {
@@ -109,8 +158,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     // Simulate form submission to load the reservation table
-    form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
-    
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
     function attachClickableCellListeners() {
         const table = document.getElementById('reservation-table');
         //console.log("Table found:", table);
@@ -123,7 +172,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
                 const unitId = cell.getAttribute('data-unit-id');
                 const hour = cell.getAttribute('data-hour');
-                console.log("hour: ",hour)
+                //console.log("hour: ", hour)
                 const categoryId = cell.getAttribute('data-category-id');
                 const categoryName = cell.getAttribute('data-category-name');
 
@@ -131,7 +180,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 // Store the category ID and name in variables accessible to the Next button click handler
                 currentCategoryId = categoryId;
                 currentCategoryName = categoryName;
-                
+
                 //console.log("Cell clicked for unit ID:", unitId, "at hour:", cell.getAttribute('data-hour'), "in category:", cell.getAttribute('data-category-name'));
 
                 if (startCell === cell || endCell === cell) {
@@ -181,13 +230,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
         clickableCells.forEach(cell => {
             // Existing click event listener code here
 
-            cell.addEventListener('mouseenter', function() {
+            cell.addEventListener('mouseenter', function () {
                 if (!this.style.backgroundColor) { // Only change color if not part of a selection
                     this.style.backgroundColor = 'lightblue';
                 }
             });
 
-            cell.addEventListener('mouseleave', function() {
+            cell.addEventListener('mouseleave', function () {
                 if (this.style.backgroundColor === 'lightblue') { // Reset only if it was changed on hover
                     this.style.backgroundColor = ''; // Reset to default or you can set it to the initial color
                 }
@@ -204,39 +253,33 @@ document.addEventListener('DOMContentLoaded', (event) => {
         // Ensure hours are two digits and use 24-hour format
         startHour = startHour.padStart(2, '0');
         endHour = endHour.padStart(2, '0');
-        
+
         const selectedStartDate = `${dateInput}T${startHour}:00`;
         const selectedEndDate = `${dateInput}T${endHour}:00`;
-    
+
         //console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}`);
-        
+
         const categoryParam = currentCategoryId ? `&category=${encodeURIComponent(currentCategoryId)}` : '';
 
         window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
     });
-    
-    document.getElementById('prevDay').addEventListener('click', function() {
-        adjustDate(-1);
-    });
 
-    document.getElementById('nextDay').addEventListener('click', function() {
-        adjustDate(1);
-    });
+
     function adjustDate(days) {
         var dateInput = document.getElementById('dateInput');
         var currentDate = new Date(dateInput.value);
         currentDate.setDate(currentDate.getDate() + days);
-    
+
         var year = currentDate.getFullYear();
         var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Adds leading zero
         var day = ('0' + currentDate.getDate()).slice(-2); // Adds leading zero
-    
+
         dateInput.value = `${year}-${month}-${day}`;
         // Programmatically submit the form
-        document.getElementById('date-form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+        document.getElementById('date-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     }
 
     // Invoke these functions at the end to ensure they are attached at the start.
-    
+
     attachClickableCellListeners(); // Ensure this is called initially too.
 });

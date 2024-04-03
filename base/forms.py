@@ -96,15 +96,23 @@ class OfferForm(ModelForm):
 
 
 class CategoryForm(ModelForm):
+    unit_names_input = forms.CharField(
+        required=False,
+        label="Unit names",
+        help_text='Insert names of your units separated by comma.',
+        widget=forms.TextInput(attrs={"placeholder": "A1, A2, B1, B2 or room23 etc."}),
+    )
+
     class Meta:
         model = models.Category
         exclude = [
             "belongs_to_offer",
             "created_at",
             "category_pricing",
-            "category_capacity",  
-            # by now the system allows only 1:1 reservations 
-            #(not e g seminars, where more people can make a reservation for one time)
+            "category_capacity",
+            "unit_names",
+            # by now the system allows only 1:1 reservations
+            # (not e g seminars, where more people can make a reservation for one time)
         ]  # limiting the fields if that are displayed
         widgets = {
             "additional_time": widgets.DateInput(

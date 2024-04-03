@@ -60,11 +60,12 @@ class Category(models.Model):
     # category_id = models.IntegerField(primary_key=True)
     category_name = models.CharField(max_length=50)
     category_description = models.CharField(max_length=1000, null=True, blank=True)
-    category_capacity = models.IntegerField(default=1)
+    category_capacity = models.IntegerField(default=1,help_text="How many reservations at one time are possible? e.g.seminar = 20 or parkplace = 1")
     max_simultneous_reservations = models.IntegerField(default=1)
     additional_time = models.DurationField(null=True, blank=True)
-    count_of_units = models.IntegerField(default=1)
+    count_of_units = models.IntegerField(default=1,help_text="How many units are there in this category? e.g. 5 parkplaces for disabled people")
     created_at = models.DateTimeField(default=timezone.now)
+    unit_names = models.JSONField(default=list) # list of unit names
     # last_edited_at
     opening_time = models.TimeField(default=datetime.time(0, 0))
     closing_time = models.TimeField(default=datetime.time(23, 59,59)) #TODO 24:00 and default values 9:23-9:23

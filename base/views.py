@@ -102,6 +102,20 @@ def create_category(request, offer_id=None):
             )  # should not be saved to the database immediately
             category.belongs_to_offer = offer
 
+            # Process unit_names_input here
+            unit_names_input = form.cleaned_data.get('unit_names_input')
+            # Parse the unit_names_input according to your chosen format
+            # For example, if input is CSV:
+            unit_names_list = [name.strip() for name in unit_names_input.split(',')] if unit_names_input else []
+            # Check if the length of unit names list matches count_of_units
+            if len(unit_names_list) != category.count_of_units:
+                # If not, send an error message back to the form
+                messages.error(request, f"Number of unit names provided ({len(unit_names_list)}) does not match the count of units specified ({category.count_of_units}). Please correct and try again.")
+                return render(request, "create_category.html", context={"form": form, "offer_id": offer_id, "offer_name": offer_name})
+
+
+            category.unit_names = unit_names_list
+
             category.save()  # Save the offer to the database
             success_message = f"Category '{category.category_name}' successfully created in '{offer.offer_name}'"
             messages.success(request, success_message)
@@ -627,22 +641,26 @@ def assign_reservation():
 def create_unit(category):
     # category = reservation.belongs_to_category
     print("unit count", category.get_unit_count())
-    if category.get_unit_count() < category.count_of_units:
+    unit_count = category.get_unit_count()
+
+    if unit_count < category.count_of_units:
+        if category.unit_names:
+            unit_name = category.unit_names[unit_count]
+        else:
+            unit_name=""    
+
         unit = Unit.objects.create(
             # unit_name="z23",  # Provide the unit name here - to be done
+            unit_name=unit_name,
             belongs_to_category=category,  # Assign the category instance
         )
         unit.save()
-        print("unit created")  # to be done - messages
+        print("unit created with name:", unit_name)  # to be done - messages
         return unit
     else:
         print("max units reached")  # to be done - messages
         return None
 
-
-def check_category_availability():
-    pass
-    # return true/false?
 
 
 def reservation_details(request):
@@ -947,4 +965,67 @@ def delete_available_slots_for_category(category):
     print(
         f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'."
     )
+from django.core.exceptions import ObjectDoesNotExist
 
+@login_required
+def my_schedule(request):
+    offers = Offer.objects.filter(manager_of_this_offer=request.user)
+    offer_ids = offers.values_list('id', flat=True)
+    categories = Category.objects.filter(belongs_to_offer__id__in=offer_ids)
+    context = {
+        "categories": categories,
+    }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        category_id = request.GET.get('category_id')
+        selected_date_str = request.GET.get('selected_date')
+        print("category ID: ",category_id)
+        # If no category_id is provided, use the default category
+        if not category_id:
+            try:
+                # Attempt to get the first category by ID as a default
+                default_category = categories.order_by('id').first()
+                if default_category:
+                    category_id = default_category.id
+                else:
+                    # Handle the case where there are no categories
+                    return JsonResponse({"error": "No categories available"}, status=400)
+            except ObjectDoesNotExist:
+                return JsonResponse({"error": "Default category not found"}, status=400)
+
+        if category_id and selected_date_str:
+            selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+            category = get_object_or_404(Category, pk=category_id)
+            ensure_availability_for_day(selected_date, category_id)
+            units_with_slots=fetch_reservation_slots(selected_date,category)
+            hours = [time(hour=h) for h in range(category.opening_time.hour, category.closing_time.hour + 1)]
+
+
+            # Render the reservations and units/slots data to the template
+            html = render_to_string(
+                'reservations_table.html',  # This template should be set up to handle both units and their reservations.
+                {
+                    "units_with_slots": units_with_slots,  # Each unit has 'slots' containing reservations for the selected date.
+                    "selected_date": selected_date,
+                    "hours": hours,
+                },
+                request=request
+            )
+            return JsonResponse({"html": html})
+
+    return render(request, "my_schedule.html", context)
+
+def fetch_reservation_slots(selected_date, category):
+    start_of_day = timezone.make_aware(datetime.combine(selected_date, time.min))
+    end_of_day = timezone.make_aware(datetime.combine(selected_date, time.max))
+    units = Unit.objects.filter(belongs_to_category=category)
+    units_with_slots = [
+        {
+            "unit": unit,
+            "reservation_slots": unit.reservation_slots.filter(
+                start_time__gte=start_of_day, start_time__lte=end_of_day
+            ).order_by("start_time"),
+        }
+        for unit in units
+    ]
+    return units_with_slots
