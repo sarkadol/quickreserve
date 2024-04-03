@@ -4,6 +4,11 @@
 
 {% block content %}
 <div class="container my-5">
+    {% if request.GET.session_expired %}
+    <div class="alert alert-warning">
+        You have been logged out due to inactivity. Please log in again.
+    </div>
+    {% endif %}
     <div class="row justify-content-center">
         <div class="col-md-6"> <!-- Adjusted column size for the login form -->
             <div class="card">

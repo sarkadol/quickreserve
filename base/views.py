@@ -257,7 +257,7 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
                 "hours": hours,
                 "category_name": category.category_name,
                 "category_id": category_id,
-                "unit_id": 2,
+                #"unit_id": 2,
             },
             request=request,
         )
