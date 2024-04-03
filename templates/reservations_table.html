@@ -17,19 +17,24 @@
         <tr>
             <td>{{ unit.unit.unit_name }} {{ unit.unit.id }}</td>
             {% for slot in unit.reservation_slots %}
-            
             {% if slot.status == "reserved" %}
             <td class="clickable-cell slot-reserved bg-danger" data-unit-id="{{ unit.unit.id }}"
                 data-hour="{{ slot.start_time|date:'H' }}" data-category-name="{{ category_name }}"
                 data-category-id="{{ category_id }}">
                 R
-                {% else %}
+            {% elif slot.status == "closed" %}
+            <td class="clickable-cell slot-closed bg-warning" data-unit-id="{{ unit.unit.id }}"
+                data-hour="{{ slot.start_time|date:'H' }}" data-category-name="{{ category_name }}"
+                data-category-id="{{ category_id }}">
+                C
+            {% else %}
             <td class="clickable-cell" data-unit-id="{{ unit.unit.id }}" data-hour="{{ slot.start_time|date:'H' }}"
                 data-category-name="{{ category_name }}" data-category-id="{{ category_id }}">
                 *
-                {% endif %}
-                {% endfor %}
+            {% endif %}
+            {% endfor %}
         </tr>
+        
         {% endfor %}
         {% else %}
         <td>There are no units yet</td><!-- This should be never displayed as the units are dynamically created-->

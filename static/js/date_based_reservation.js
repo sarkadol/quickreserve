@@ -3,14 +3,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
     preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
 
-    //arrows by the date selection
-    document.getElementById('prevDay').addEventListener('click', function () {
-        adjustDate(-1);
-    });
-
-    document.getElementById('nextDay').addEventListener('click', function () {
-        adjustDate(1);
-    });
+    
     // Prevent default action for buttons in clickable table rows and navigate programmatically
     function preventButtonEventPropagation(selector, basePath) {
         //console.log("prevent button")
@@ -168,7 +161,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (table) {
             table.addEventListener('click', function (event) {
                 const cell = event.target.closest('.clickable-cell');
-                if (!cell || cell.classList.contains('slot-reserved')) return;
+                if (!cell || cell.classList.contains('slot-reserved')|| cell.classList.contains('slot-closed')) return;
 
                 const unitId = cell.getAttribute('data-unit-id');
                 const hour = cell.getAttribute('data-hour');
@@ -203,7 +196,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                         let isSelectionValid = true;
                         let testCell = startCell.nextElementSibling;
                         while (testCell && testCell !== cell.nextElementSibling) {
-                            if (testCell.classList.contains('slot-reserved')) {
+                            if (testCell.classList.contains('slot-reserved')|| testCell.classList.contains('slot-closed')) {
                                 isSelectionValid = false;
                                 break;
                             }
@@ -263,7 +256,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
     });
+    //arrows by the date selection
+    document.getElementById('prevDay').addEventListener('click', function () {
+        adjustDate(-1);
+    });
 
+    document.getElementById('nextDay').addEventListener('click', function () {
+        adjustDate(1);
+    });
 
     function adjustDate(days) {
         var dateInput = document.getElementById('dateInput');

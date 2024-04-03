@@ -115,6 +115,8 @@ class ReservationSlot(models.Model):
             ("available", "Available"),
             ("reserved", "Reserved"),
             ("maintenance", "Maintenance"),
+            ("closed", "Closed"),
+
         ],
     )
 
