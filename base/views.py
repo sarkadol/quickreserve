@@ -1028,3 +1028,23 @@ def fetch_reservation_slots(selected_date, category):
         for unit in units
     ]
     return units_with_slots
+
+def customer_home(request,manager_id=None):
+    # Fetch the manager and associated categories
+    """user_id = request.user.id    
+    offers = Offer.objects.filter(
+        manager_of_this_offer=request.user
+    )"""
+    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=request.user).distinct()
+
+
+    # Render the categories in a template
+    return render(request, 'customer_home.html', {'categories': categories})
+
+@login_required
+def manager_link(request, manager_id=None):
+    # Build the base part of the URL dynamically
+    base_url = f"{request.scheme}://{request.get_host()}"
+    # Construct the full path with the manager_id
+    link = f"{base_url}/customer_home/{manager_id}"    
+    return render(request, 'manager_link.html', {'link': link})

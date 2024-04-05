@@ -23,7 +23,9 @@ urlpatterns = [
     path('verify_reservation/<str:token>/', views.verify_reservation, name='verify_reservation'),  # Assuming you have a verify_reservation view
     path('confirm_reservation/<str:token>/', views.confirm_reservation, name='confirm_reservation'),
     path('cancel_reservation/<str:token>/', views.cancel_reservation, name='cancel_reservation'),
-    
+    path('customer_home/<int:manager_id>', views.customer_home, name='customer_home'),
+    path('manager_link/<int:manager_id>', views.manager_link, name='manager_link'),
+
    
 
 
