@@ -1,0 +1,102 @@
+{% extends 'main.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-md">
+    <h1> Customer home </h1>
+    <p>Welcome to your management dashboard. Here you can create and manage your offers and categories to start taking reservations.</p>
+
+    <h2>My offers</h2>
+    {% if offers %}
+    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Offer name</th>
+                    <th scope="col">Offer id</th>
+                    <th scope="col">Available from</th>
+                    <th scope="col">Available to</th>
+                    <th scope="col">Created at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                <tr class="clickable-row" onclick="location.href='{% url 'offer_detail' offer.id %}'"
+                    style="cursor: pointer;" title="Click to view offer detail">
+                    <th scope="row">{{ forloop.counter }}</th>
+                    <td>{{ offer.offer_name }} </td>
+                    <td>{{ offer.id }} </td>
+                    <td>{{ offer.available_from }} </td>
+                    <td>{{ offer.available_to }} </td>
+                    <td>{{ offer.created_at }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{% url 'create_offer' %}" class="btn btn-outline-success " id="addrow">Add new offer</a>
+    {% else %}
+    <p>You do not have any offers yet. Start by creating your first offer to make your services available for booking.</p>
+    <a href="{% url 'create_offer' %}" class="btn btn-success" id="addrow">Create your first Offer</a>
+    {% endif %}
+
+    <h2>My categories</h2>
+    {% if categories %}
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Category name</th>
+                <th scope="col">Offer</th>
+                <th scope="col">Max simultneous reservations</th>
+                <th scope="col">Additional time</th>
+                <th scope="col">Max number of units</th>
+                <th scope="col">Real number of units</th>
+                <th scope="col">Created at</th>
+                <th scope="col"> </th>
+
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for category in categories %}
+            <tr class="clickable-row" style="cursor: pointer;" title="Click to edit category"
+                onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
+
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ category.category_name }} </td>
+                <td>{{ category.belongs_to_offer }} </td>
+                <td>{{ category.max_simultneous_reservations }} </td>
+                <td>{{ category.additional_time }} </td>
+                <td>{{ category.count_of_units }} </td>
+                <td>{{ category.get_unit_count }} </td>
+                <td>{{ category.created_at }} </td>
+                <td> <button class="btn btn-primary btn-reservation-form"
+                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">Res
+                        form</button>
+                <td> <button class="btn btn-primary btn-reservation-calendar"
+                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New
+                        reservation timetable</button>
+
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <p>You do not have any categories. Begin by creating categories for your offers to organize them better. </p>
+        <p>Each category can represent a different type of service or reservation slot you offer.</p>
+    <p>Categories can be created from the offer detail page once you have offers set up.</p>
+    {% endif %}
+
+
+    <script src="{% static 'js/date_based_reservation.js' %}"></script>
+
+</div>
+{% endblock %}

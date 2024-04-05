@@ -2,3 +2,7 @@
     background-color: red !important; /* Use !important to ensure override 
 }
 */
+.clickable-row:hover {
+    cursor: pointer;
+    background-color: #fa0000; /* Optional: highlight row on hover */
+}
