@@ -632,7 +632,9 @@ def create_unit(category):
     unit_count = category.get_unit_count()
 
     if unit_count < category.count_of_units:
-        if category.unit_names:
+        if len(category.unit_names) == 1 and category.count_of_units > 1:
+            unit_name = category.unit_names[0]
+        elif len(category.unit_names) >= unit_count:
             unit_name = category.unit_names[unit_count]
         else:
             unit_name=""    
@@ -741,6 +743,10 @@ def confirm_reservation(request, token):
             reservation.status = "confirmed"
             reservation.save()
             print("reservation saved")
+
+            day = reservation.reservation_from.date()
+            category_id=reservation.belongs_to_category.id
+            ensure_availability_for_day(day,category_id)
 
             # Identify and reserve slots
             available_slots = ReservationSlot.objects.filter(
@@ -1048,3 +1054,27 @@ def manager_link(request, manager_id=None):
     # Construct the full path with the manager_id
     link = f"{base_url}/customer_home/{manager_id}"    
     return render(request, 'manager_link.html', {'link': link})
+
+from base.optimization import *
+@login_required
+def optimize(request):
+    print("optimized clicked")
+    current_user = request.user
+    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="Tenisový kurt")
+
+
+    # Assuming you have a function to optimize categories
+    try:
+        for category in categories:
+            optimize_category_max_units_free(category)  
+
+        success_message = "Categories successfully optimized."
+        messages.success(request, success_message)
+
+    except Exception as e:
+        # If something goes wrong, send an error message
+        error_message = f"Failed to optimize categories: {str(e)}"
+        messages.error(request, error_message)
+
+    # Redirect to a new URL where messages can be displayed or refresh the same page
+    return render(request, 'manager_link.html') # Replace 'some-view-name' with the actual view you want to redirect to

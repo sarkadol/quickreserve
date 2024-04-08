@@ -25,6 +25,8 @@ urlpatterns = [
     path('cancel_reservation/<str:token>/', views.cancel_reservation, name='cancel_reservation'),
     path('customer_home/<int:manager_id>', views.customer_home, name='customer_home'),
     path('manager_link/<int:manager_id>', views.manager_link, name='manager_link'),
+    path('optimize', views.optimize, name='optimize'),
+
 
    
 
