@@ -100,40 +100,7 @@ class Unit(models.Model):
         return self.unit_name  # rewrites Category object (x) to its name in admin panel
 
 
-class ReservationSlot(models.Model):
-    unit = models.ForeignKey(
-        Unit, related_name="reservation_slots", on_delete=models.CASCADE
-    )
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.DurationField(default=timedelta(minutes=60))
 
-    # Consider including a status field as suggested previously
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("available", "Available"),
-            ("reserved", "Reserved"),
-            ("maintenance", "Maintenance"),
-            ("closed", "Closed"),
-
-        ],
-    )
-
-    class Meta:
-        unique_together = (
-            "unit",
-            "start_time",
-        )  # two reservation slots cannost start at the same time in the same unit
-
-    def save(self, *args, **kwargs):
-        # Automatically calculate end_time before saving
-        if not self.end_time:
-            self.end_time = self.start_time + self.duration
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Slot in {self.unit} from {self.start_time} to {self.end_time}"
 
 class Reservation(models.Model):
     reservation_from = models.DateTimeField(help_text="Start time/date of the reservation")
@@ -168,3 +135,39 @@ class Reservation(models.Model):
 
     class Meta:
         ordering = ['-submission_time'] # Reservations ordered in ascending order (earliest first)
+
+class ReservationSlot(models.Model):
+    unit = models.ForeignKey(
+        Unit, related_name="reservation_slots", on_delete=models.CASCADE
+    )
+    reservation = models.ForeignKey(Reservation, on_delete=models.SET_NULL, null=True, blank=True, related_name="slots")
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.DurationField(default=timedelta(minutes=60))
+
+    # Consider including a status field as suggested previously
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("available", "Available"),
+            ("reserved", "Reserved"),
+            ("maintenance", "Maintenance"),
+            ("closed", "Closed"),
+
+        ],
+    )
+
+    class Meta:
+        unique_together = (
+            "unit",
+            "start_time",
+        )  # two reservation slots cannost start at the same time in the same unit
+
+    def save(self, *args, **kwargs):
+        # Automatically calculate end_time before saving
+        if not self.end_time:
+            self.end_time = self.start_time + self.duration
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Slot in {self.unit} from {self.start_time} to {self.end_time}"

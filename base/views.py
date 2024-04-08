@@ -767,9 +767,10 @@ def confirm_reservation(request, token):
 
             if unit_to_reserve:
                 # Reserve slots only for the selected unit
-                available_slots.filter(unit_id=unit_to_reserve["unit"]).update(
+                available_slots.filter(unit_id=unit_to_reserve["unit"]).update(reservation=reservation,
                     status="reserved"
                 )
+
 
                 # Optional: Perform any additional steps such as deleting available slots for the category
                 delete_available_slots_for_category(reservation.belongs_to_category)
@@ -1056,17 +1057,18 @@ def manager_link(request, manager_id=None):
     return render(request, 'manager_link.html', {'link': link})
 
 from base.optimization import *
-@login_required
+#@login_required
 def optimize(request):
     print("optimized clicked")
     current_user = request.user
-    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="Tenisový kurt")
-
-
+    print("current_user: ",current_user)
+    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén")
+    
     # Assuming you have a function to optimize categories
     try:
         for category in categories:
-            optimize_category_max_units_free(category)  
+            optimize_category(category)  
+            
 
         success_message = "Categories successfully optimized."
         messages.success(request, success_message)
