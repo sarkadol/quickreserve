@@ -4,6 +4,8 @@ from django.http import HttpResponse
 import pytz
 from . import models, forms
 from datetime import datetime, time, timedelta
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -681,6 +683,35 @@ def reservation_details(request):
 
     return render(request, "reservation_details.html", context)
 
+@csrf_exempt
+def reserve_slot(request):
+    if request.method == 'POST':
+        start_time = request.GET.get("start")
+        end_time = request.GET.get("end")
+        category_id = request.GET.get("category")
+        unit_id = request.GET.get("unit")
+        #TODO reserving already existing slot 
+
+    try:
+            with transaction.atomic():  # Use a transaction to ensure data integrity
+                # Fetch and update the slots
+                updated_count = ReservationSlot.objects.filter(
+                    unit_id=unit_id,
+                    start_time__gte=start_time,
+                    end_time__lte=end_time,
+                    status='available'  # Assuming you only want to update available slots
+                ).update(
+                    #reservation_id=reservation_id,
+                    status='pending'
+                )
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Updated {updated_count} slots to pending.'
+                })
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def verify_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
@@ -757,6 +788,7 @@ def confirm_reservation(request, token):
             )
 
             # Optional: Add logic here to choose a specific unit based on your criteria
+            # TODO nefunguje pokud se překrývají - přiřadit správně
             # For simplicity, let's select a unit with the least number of reserved slots
             unit_to_reserve = (
                 available_slots.values("unit")
@@ -1036,6 +1068,7 @@ def fetch_reservation_slots(selected_date, category):
     ]
     return units_with_slots
 
+@login_required
 def customer_home(request,manager_id=None):
     # Fetch the manager and associated categories
     """user_id = request.user.id    

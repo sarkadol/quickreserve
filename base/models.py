@@ -150,6 +150,7 @@ class ReservationSlot(models.Model):
         max_length=20,
         choices=[
             ("available", "Available"),
+            ("pending", "Pending"),
             ("reserved", "Reserved"),
             ("maintenance", "Maintenance"),
             ("closed", "Closed"),

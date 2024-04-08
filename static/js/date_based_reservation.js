@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (table) {
             table.addEventListener('click', function (event) {
                 const cell = event.target.closest('.clickable-cell');
-                if (!cell || cell.classList.contains('slot-reserved')|| cell.classList.contains('slot-closed')) return;
+                if (!cell || cell.classList.contains('slot-reserved')|| cell.classList.contains('slot-closed')|| cell.classList.contains('slot-pending')) return;
 
                 const unitId = cell.getAttribute('data-unit-id');
                 const hour = cell.getAttribute('data-hour');
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                         let isSelectionValid = true;
                         let testCell = startCell.nextElementSibling;
                         while (testCell && testCell !== cell.nextElementSibling) {
-                            if (testCell.classList.contains('slot-reserved')|| testCell.classList.contains('slot-closed')) {
+                            if (testCell.classList.contains('slot-reserved')|| testCell.classList.contains('slot-closed')|| testCell.classList.contains('slot-pending')) {
                                 isSelectionValid = false;
                                 break;
                             }
@@ -238,24 +238,39 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     document.getElementById('nextButton').addEventListener('click', () => {
-        //console.log("Next button clicked");
         const dateInput = document.getElementById('dateInput').value;
         let startHour = startCell ? startCell.getAttribute('data-hour') : 'null';
         let endHour = endCell ? endCell.getAttribute('data-hour') : 'null';
-        //console.log("startHOUR",startHour)
+    
         // Ensure hours are two digits and use 24-hour format
         startHour = startHour.padStart(2, '0');
         endHour = endHour.padStart(2, '0');
-
+    
         const selectedStartDate = `${dateInput}T${startHour}:00`;
         const selectedEndDate = `${dateInput}T${endHour}:00`;
-
-        //console.log(`Start DateTime: ${selectedStartDate}, End DateTime: ${selectedEndDate}`);
-
+    
         const categoryParam = currentCategoryId ? `&category=${encodeURIComponent(currentCategoryId)}` : '';
+        const unitParam = currentUnitId ? `&unit=${encodeURIComponent(currentUnitId)}` : '';
 
-        window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
+    
+        // Send AJAX request to mark the slot as pending
+        fetch(`/reserve-slot?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}${unitParam}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log("success")
+                window.location.href = `/reservation-details?start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}${categoryParam}`;
+            } else {
+                alert('This slot is already booked. Please choose another slot.');
+                console.log("fail")
+
+            }
+        })
+        .catch(error => console.error('Error:', error));
     });
+    
     //arrows by the date selection
     document.getElementById('prevDay').addEventListener('click', function () {
         adjustDate(-1);
