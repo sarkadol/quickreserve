@@ -681,8 +681,8 @@ def reservation_details(request):
 
     # Prepare the context
     context = {
-        "start_date": readable_start,
-        "end_date": readable_end,
+        "start_date": start_date,
+        "end_date": end_date,
         "category_name": category_name,
         "category_id": category_id,  # Assuming you want to pass the ID for form submission
         #'user_timezone': user_timezone
@@ -1097,7 +1097,7 @@ def optimize(request):
     # Assuming you have a function to optimize categories
     try:
         for category in categories:
-            optimize_category(category)  
+            optimize_category(category, )  
             
 
         success_message = "Categories successfully optimized."
