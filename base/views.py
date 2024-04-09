@@ -660,7 +660,14 @@ def reservation_details(request):
     start_date = request.GET.get("start")
     end_date = request.GET.get("end")
     category_id = request.GET.get("category")
-    # user_timezone = request.GET.get('category') #TODO
+
+    if start_date and end_date:
+        start_datetime = datetime.fromisoformat(start_date)
+        end_datetime = datetime.fromisoformat(end_date)
+
+        # Format the datetime objects to a more readable format
+        readable_start = start_datetime.strftime('%B %d, %Y at %H:%M')
+        readable_end = end_datetime.strftime('%B %d, %Y at %H:%M')
 
     # Use the category_id to get the Category object and its name
     category = None
@@ -674,8 +681,8 @@ def reservation_details(request):
 
     # Prepare the context
     context = {
-        "start_date": start_date,
-        "end_date": end_date,
+        "start_date": readable_start,
+        "end_date": readable_end,
         "category_name": category_name,
         "category_id": category_id,  # Assuming you want to pass the ID for form submission
         #'user_timezone': user_timezone
@@ -690,25 +697,24 @@ def reserve_slot(request):
         end_time = request.GET.get("end")
         category_id = request.GET.get("category")
         unit_id = request.GET.get("unit")
-        #TODO reserving already existing slot 
-
+ 
     try:
-            with transaction.atomic():  # Use a transaction to ensure data integrity
-                # Fetch and update the slots
-                updated_count = ReservationSlot.objects.filter(
-                    unit_id=unit_id,
-                    start_time__gte=start_time,
-                    end_time__lte=end_time,
-                    status='available'  # Assuming you only want to update available slots
-                ).update(
-                    #reservation_id=reservation_id,
-                    status='pending'
-                )
+        with transaction.atomic():  # Use a transaction to ensure data integrity
+            # Fetch and update the slots
+            updated_count = ReservationSlot.objects.filter(
+                unit_id=unit_id,
+                start_time__gte=start_time,
+                end_time__lte=end_time,
+                status='available'  # Assuming you only want to update available slots
+            ).update(
+                #reservation_id=reservation_id,
+                status='pending'
+            )
 
-                return JsonResponse({
-                    'status': 'success',
-                    'message': f'Updated {updated_count} slots to pending.'
-                })
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Updated {updated_count} slots to pending.'
+            })
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -751,75 +757,66 @@ def confirm_reservation(request, token):
         reservation = Reservation.objects.get(
             verification_token=token, status="pending"
         )
-        context = {
-            "header": "Reservation confirmed",
-            "message": "Your reservation has been successfully confirmed.",
-        }
+        
         # Check if the link has expired (more than 1 hour since submission)
         if timezone.now() - reservation.submission_time > timedelta(
             hours=1
         ):  # 1 hour before the link expires
             # Link has expired
-            reservation.status = (
-                "cancelled"  # Optionally update the status to 'expired'
-            )
-            reservation.save()  # Save the updated status
+            with transaction.atomic():
+                reservation.status = "cancelled"
+                reservation.save()
+
+                ReservationSlot.objects.filter(
+                    reservation=reservation,
+                    status="pending"
+                ).update(status="available")
+
             context = {
                 "header": "Reservation expired",
                 "message": "Your reservation link hase expired.",
             }
+
             return render(request, "reservation_status.html", context)
         else:
             # Link is still valid, confirm the reservation
-            reservation.status = "confirmed"
-            reservation.save()
-            print("reservation saved")
+            with transaction.atomic():
+                # Confirm the reservation if the link is still valid
+                reservation.status = "confirmed"
+                reservation.save()
+                print("reservation saved")
 
-            day = reservation.reservation_from.date()
-            category_id=reservation.belongs_to_category.id
-            ensure_availability_for_day(day,category_id)
+                # Ensure availability and then process the slots
+                day = reservation.reservation_from.date()
+                category_id = reservation.belongs_to_category.id
+                ensure_availability_for_day(day, category_id)
 
-            # Identify and reserve slots
-            available_slots = ReservationSlot.objects.filter(
-                unit__belongs_to_category=reservation.belongs_to_category,
-                start_time__gte=reservation.reservation_from,
-                end_time__lte=reservation.reservation_to,
-                status="available",
-            )
-
-            # Optional: Add logic here to choose a specific unit based on your criteria
-            # TODO nefunguje pokud se překrývají - přiřadit správně
-            # For simplicity, let's select a unit with the least number of reserved slots
-            unit_to_reserve = (
-                available_slots.values("unit")
-                .annotate(total=Count("unit"))
-                .order_by("total")
-                .first()
-            )
-
-            if unit_to_reserve:
-                # Reserve slots only for the selected unit
-                available_slots.filter(unit_id=unit_to_reserve["unit"]).update(reservation=reservation,
-                    status="reserved"
+                # Identify and update pending slots to reserved
+                available_slots = ReservationSlot.objects.filter(
+                    unit__belongs_to_category=reservation.belongs_to_category,
+                    start_time__gte=reservation.reservation_from,
+                    end_time__lte=reservation.reservation_to,
+                    status="pending"
                 )
 
+                if available_slots.exists():
+                    unit_to_reserve = available_slots.values("unit").annotate(total=Count("unit")).order_by("total").first()
+                    
+                    if unit_to_reserve:
+                        available_slots.filter(unit_id=unit_to_reserve["unit"]).update(
+                            reservation=reservation,
+                            status="reserved"
+                        )
 
-                # Optional: Perform any additional steps such as deleting available slots for the category
-                delete_available_slots_for_category(reservation.belongs_to_category)
+                        # Optional: Clear or adjust other slots
+                        delete_available_slots_for_category(reservation.belongs_to_category)
 
                 context = {
                     "header": "Reservation confirmed",
                     "message": "Your reservation has been successfully confirmed.",
                 }
                 return render(request, "reservation_status.html", context)
-            else:
-                # Handle case where no slots are available for reservation
-                context = {
-                    "header": "Reservation failed",
-                    "message": "No available slots could be found for your reservation.",
-                }
-                return render(request, "reservation_status.html", context)
-
+            
     except Reservation.DoesNotExist:
         return HttpResponse("Invalid or expired link.")
 
