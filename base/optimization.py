@@ -15,24 +15,15 @@ def optimize_category(category, day=None):  # day = today as default value
     print(f"> Initial units in category '{category}': {[unit.id for unit in units]}")
 
     #fetch all reservations
-    reservations = Reservation.objects.filter(
-        belongs_to_category=category,
-        reservation_to__gte=day_start,
-        reservation_from__lte=day_end
-        
-    ).distinct()
-
+    reservations = fetch_reservations(category, day_start, day_end)
     print("> Reservations for the day:\n" + "\n".join([
         f"Reservation from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
         for reservation in reservations
     ]))
 
     # Fetch all reservation slots for the specified day and category
-    slots = ReservationSlot.objects.filter(
-        unit__belongs_to_category=category,
-        start_time__gte=day_start,
-        start_time__lt=day_end
-    )
+    slots = fetch_reservation_slots_op(category, day_start, day_end)
+
     for unit in units:
         create_slots_for_unit(unit, day,category.opening_time, category.closing_time)
 
@@ -58,6 +49,22 @@ import pulp
 from collections import defaultdict
 
 import pulp
+def fetch_reservations(category, day_start, day_end):
+    """Fetch all reservations for the given day and category."""
+    return Reservation.objects.filter(
+        belongs_to_category=category,
+        reservation_to__gte=day_start,
+        reservation_from__lte=day_end
+    ).distinct()
+
+def fetch_reservation_slots_op(category, day_start, day_end):
+    """Fetch all reservation slots for the specified day and category."""
+    return ReservationSlot.objects.filter(
+        unit__belongs_to_category=category,
+        start_time__gte=day_start,
+        start_time__lt=day_end
+    )
+
 def get_day_start_end(day=None):
     """Returns the start and end time for a given day."""
     if day is None:
