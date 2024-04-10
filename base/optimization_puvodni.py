@@ -1,11 +1,5 @@
 import pulp
 
-from datetime import date, datetime, timedelta
-from django.utils import timezone
-
-from base.views import create_slots_for_unit, delete_available_slots_for_category
-from .models import Category, Unit, ReservationSlot, Reservation
-
 # Example data: reservation times
 reservations = {
     1: (6, 10),
@@ -52,13 +46,13 @@ for j in range(1, len(reservations)+1):
             assigned_reservations.append(reservations[i])
     if assigned_reservations:
         unit_assignments[y[j].name] = assigned_reservations
-
+        
 # Print the results
 for unit, res in unit_assignments.items():
     print(f"{unit} = {', '.join(str(r) for r in res)}")
 
 
-#odložený kod
+#odložený
 def optimize_category_equally_distributed(category, day=None):
     if day is None:
         day = datetime.now().date()  # Use today's date if no date is provided

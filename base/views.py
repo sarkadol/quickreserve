@@ -1094,12 +1094,18 @@ def optimize(request):
     print("current_user: ",current_user)
     categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén")
     
+    start_day = timezone.now().date() + timezone.timedelta(days=1)
+
     # Assuming you have a function to optimize categories
     try:
-        for category in categories:
-            optimize_category(category, )  
+        for i in range(1):  # Loop through the next 7 days from today
+            day_to_optimize = start_day + timezone.timedelta(days=i)
+            for category in categories:
+                # Optimize each category for the current day in the loop
+                print("OPTIMALIZUJI DEN",day_to_optimize)
+                optimize_category(category,day_to_optimize)
             
-
+        print("HOTOVO")
         success_message = "Categories successfully optimized."
         messages.success(request, success_message)
 

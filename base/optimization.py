@@ -8,13 +8,7 @@ from .models import Category, Unit, ReservationSlot, Reservation
 def optimize_category(category, day=None):  # day = today as default value
     print("Starting optimization")
 
-    if day is None:
-        day = timezone.now().date()  # Use today's date if no date is provided
-        #day = date(2024, 4, 8)
-
-    day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()))
-    day_end = timezone.make_aware(datetime.combine(day, datetime.max.time()))
-
+    day_start, day_end = get_day_start_end(day)
 
     # Fetch all units in the given category
     units = Unit.objects.filter(belongs_to_category=category)
@@ -42,24 +36,35 @@ def optimize_category(category, day=None):  # day = today as default value
     for unit in units:
         create_slots_for_unit(unit, day,category.opening_time, category.closing_time)
 
-    print(f"> Slots for day {day}:")
-    for slot in slots:
-        print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
+    #print(f"> Slots for day {day}:")
+    #for slot in slots:
+        #print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
         
-    #optimize   
-    optimize_category_max_units_free(units, slots, reservations)
+    #optimize function   
+    optimized_reservations_to_units =optimize_category_max_units_free(units, slots, reservations)
     #optimize_category_equally_distributed(units, slots, reservations)
+
+    print_assignment(optimized_reservations_to_units, units, reservations)
+    assign_optimized_reservations_to_slots(units, reservations, optimized_reservations_to_units, slots)
+
 
     delete_available_slots_for_category(category)
 
-    print(f"OPTIMIZED Slots for day {day}:")
-    for slot in slots:
-        print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
+    #print(f"OPTIMIZED Slots for day {day}:")
+    #for slot in slots:
+    #    print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
 
 import pulp
 from collections import defaultdict
 
 import pulp
+def get_day_start_end(day=None):
+    """Returns the start and end time for a given day."""
+    if day is None:
+        day = timezone.now().date()
+    day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()))
+    day_end = timezone.make_aware(datetime.combine(day, datetime.max.time()))
+    return day_start, day_end
 
 def optimize_category_max_units_free(units, slots, reservations):
     # Create a linear programming problem
@@ -86,6 +91,10 @@ def optimize_category_max_units_free(units, slots, reservations):
     
     # Solve the problem
     prob.solve()
+
+    # Retrieving and returning Xij values
+    assignment_dict = {(unit.id, reservation.id): pulp.value(x[unit.id, reservation.id]) for unit in units for reservation in reservations}
+    
     
     # Prepare to print results
     unit_reservations = {}
@@ -110,9 +119,53 @@ def optimize_category_max_units_free(units, slots, reservations):
                 slot.status = 'reserved'  # Mark slot as reserved if any reservation is scheduled in this slot
                 slot.reservation = reservation
     
-    print("Optimization complete.")
+    print("Optimization complete. PRINTING ASSIGMENT")
+    return assignment_dict
 
 # Remember to handle exceptions and edge cases in your actual implementation.
+def assign_optimized_reservations_to_slots(units, reservations, assignment_dict, slots):
+    """
+    Updates the slots based on optimized assignment of reservations to units.
+
+    :param units: QuerySet of Unit objects
+    :param reservations: QuerySet of Reservation objects
+    :param assignment_dict: Dict with keys as (unit_id, reservation_id) and values as 1 or 0, indicating assignment.
+    :param slots: QuerySet of ReservationSlot objects for the day
+    """
+    slots.update(status='available', reservation=None)
+
+    for (unit_id, reservation_id), assigned in assignment_dict.items():
+        if assigned == 1:  # If the reservation is assigned to the unit
+            reservation = next((r for r in reservations if r.id == reservation_id), None)
+            unit = next((u for u in units if u.id == unit_id), None)
+
+            if reservation and unit:
+                # Find slots that overlap with the reservation time in the specified unit
+                overlapping_slots = slots.filter(
+                    unit_id=unit.id,
+                    start_time__lt=reservation.reservation_to,
+                    end_time__gt=reservation.reservation_from
+                )
+                for slot in overlapping_slots:
+                    slot.status = 'reserved'  # Update slot status
+                    slot.reservation = reservation  # Assign the reservation to the slot
+                    slot.save()  # Don't forget to save the slot object!
+            else:
+                print(f"Skipping assignment for non-existing unit ({unit_id}) or reservation ({reservation_id}).")
+        # You can extend this block to handle cases where assigned == 0 if necessary
+
+def print_assignment(assignment_dict, units, reservations):
+    print("Reservation Assignments:\n")
+    for unit in units:
+        print(f"Unit {unit.id}:")
+        assigned = False  # Track if any reservations are assigned to this unit
+        for reservation in reservations:
+            if assignment_dict.get((unit.id, reservation.id)) == 1:
+                print(f"  - Reservation {reservation.id} assigned. (Customer: {reservation.customer_name}, Time: {reservation.reservation_from.strftime('%Y-%m-%d %H:%M')} to {reservation.reservation_to.strftime('%Y-%m-%d %H:%M')})")
+                assigned = True
+        if not assigned:
+            print("  No reservations assigned.")
+        print("")  # Add an empty line for better readability between units
 
 
 import pulp
