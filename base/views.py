@@ -1,21 +1,44 @@
-from django.db import IntegrityError
-from django.shortcuts import render, redirect, get_object_or_404, reverse
-from django.http import HttpResponse
-import pytz
-from . import models, forms
+# Python standard library imports
 from datetime import datetime, time, timedelta
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
+import uuid
+
+# External libraries
+import pytz
+
+# Imports from my project's modules
+from . import forms, models
+from .models import Category, Offer, Reservation, ReservationSlot, Unit
+from base.optimization import *
+
+# Django messaging and contributions
 from django.contrib import messages
+
+# Django decorators for views, CSRF, and authentication
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+
+# Django utilities and timezone
 from django.utils import timezone
-from .models import Offer, Category, Unit, Reservation, ReservationSlot
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from django.http import HttpResponseNotFound
+
+# Django views, shortcuts, and URL utilities
+from django.shortcuts import get_object_or_404, redirect, render, reverse
+from django.urls import reverse
 from django.views.defaults import page_not_found
 
-# https://www.pythontutorial.net/django-tutorial/django-password-reset/ to be done
+# Django HTTP utilities and response handling
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect, JsonResponse
+from django.template.loader import render_to_string
+
+
+# Django database operations
+from django.db import IntegrityError, transaction
+from django.db.models import Count, ExpressionWrapper, F, DateTimeField
+
+# Django configuration and exceptions
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
 
 
 @login_required  # If a user is not logged in, Django will redirect them to the login page.
@@ -755,12 +778,7 @@ def verify_reservation(request, token):
     return render(request, "reservation_confirm_cancel.html", context)
 
 
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.views.decorators.http import require_POST
-from django.db.models import F, ExpressionWrapper, DateTimeField
 
-from django.db.models import Count
 
 
 @require_POST
@@ -853,11 +871,6 @@ def cancel_reservation(request, token):
     return render(request, "reservation_status.html", context)
 
 
-import uuid
-from django.http import HttpResponse
-from .models import Reservation
-from django.core.mail import send_mail
-from django.conf import settings
 
 
 def submit_reservation(request):
@@ -1017,7 +1030,6 @@ def delete_available_slots_for_category(category):
     print(
         f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'."
     )
-from django.core.exceptions import ObjectDoesNotExist
 
 @login_required
 def my_schedule(request):
@@ -1103,7 +1115,6 @@ def manager_link(request, manager_id=None):
     link = f"{base_url}/customer_home/{manager_id}"    
     return render(request, 'manager_link.html', {'link': link})
 
-from base.optimization import *
 #@login_required
 def optimize(request):
     print("optimized clicked")

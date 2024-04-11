@@ -32,7 +32,7 @@ class ReservationSlotAdmin(admin.ModelAdmin):
 admin.site.register(models.ReservationSlot, ReservationSlotAdmin)
 
 # admin.site.register(models.Assigned)
-admin.site.register(models.UserRole)
+#admin.site.register(models.UserRole)
 admin.site.register(models.Offer)
 admin.site.register(models.Pricing)
 admin.site.register(models.Reservation)

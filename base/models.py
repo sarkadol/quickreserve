@@ -1,10 +1,13 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from datetime import timedelta
+# Standard library imports
+from datetime import datetime, timedelta
 import datetime
 
-# Create your models here.
+# Django model imports
+from django.db import models
+from django.contrib.auth.models import User
+
+# Django utilities
+from django.utils import timezone
 
 """class Assigned(models.Model):
     #category_id = models.IntegerField(primary_key=True)
@@ -12,16 +15,6 @@ import datetime
     pricing = models.ForeignKey('Pricing', on_delete=models.CASCADE)
     category = models.ForeignKey('Category', on_delete=models.CASCADE)"""
 # probably do not need this, as the pricing is like ForeignKey in Category
-
-
-class UserRole(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    user_role = models.CharField(
-        max_length=8,
-        choices=[("CUSTOMER", "Customer"), ("MANAGER", "Manager"), ("USER", "User")],
-        default="USER",
-    )
-    # is needed? maybe is_staff is enough
 
 
 class Offer(models.Model):

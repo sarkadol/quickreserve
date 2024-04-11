@@ -1,10 +1,16 @@
-from django.forms import ModelForm, DateInput, widgets, DateTimeInput, Select
-from . import models
+# Standard library imports
 from datetime import datetime, timedelta
-from django.utils import timezone
-from django import forms
 
-# import datetime
+# Django form and widget imports
+from django import forms
+from django.forms import ModelForm, DateInput, DateTimeInput, Select, widgets
+
+# Django utilities
+from django.utils import timezone
+
+# Imports from your project's modules
+from . import models
+
 
 TIME_CHOICES = [
     (
