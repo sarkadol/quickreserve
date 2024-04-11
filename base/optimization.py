@@ -23,16 +23,18 @@ def optimize_category(category, day=None):  # day = today as default value
 
     # Fetch all reservation slots for the specified day and category
     slots = fetch_reservation_slots_op(category, day_start, day_end)
-
+    
     for unit in units:
         create_slots_for_unit(unit, day,category.opening_time, category.closing_time)
-
+    print("slots got")
     #print(f"> Slots for day {day}:")
     #for slot in slots:
         #print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
         
     #optimize function   
     optimized_reservations_to_units =optimize_category_max_units_free(units, slots, reservations)
+    #optimized_reservations_to_units =optimize_category_free_time(units, slots, reservations) #not working yet
+    
     #optimize_category_equally_distributed(units, slots, reservations)
 
     print_assignment(optimized_reservations_to_units, units, reservations)
@@ -54,7 +56,9 @@ def fetch_reservations(category, day_start, day_end):
     return Reservation.objects.filter(
         belongs_to_category=category,
         reservation_to__gte=day_start,
-        reservation_from__lte=day_end
+        reservation_from__lte=day_end,
+        status__in=['confirmed', 'pending']  # Only include confirmed and pending reservations
+
     ).distinct()
 
 def fetch_reservation_slots_op(category, day_start, day_end):
@@ -77,13 +81,20 @@ def optimize_category_max_units_free(units, slots, reservations):
     # Create a linear programming problem
     prob = pulp.LpProblem("Unit_Minimization", pulp.LpMinimize)
     
+    # Create a binary variable for each unit to indicate if it's used
+    y = pulp.LpVariable.dicts("unit_used", [unit.id for unit in units], cat='Binary')
+
+
     # Create a variable for each unit-reservation pair, where variable is 1 if the reservation is in the unit
     x = pulp.LpVariable.dicts("unit_reservation", 
                               ((unit.id, reservation.id) for unit in units for reservation in reservations),
                               cat='Binary')
     
     # Objective function: Minimize the number of units used
-    prob += pulp.lpSum(x[unit.id, reservation.id] for unit in units for reservation in reservations)
+    #prob += pulp.lpSum(x[unit.id, reservation.id] for unit in units for reservation in reservations)
+
+    # Objective Function: Minimize the number of units used
+    prob += pulp.lpSum(y[unit.id] for unit in units)
 
     # Constraint: Each reservation must be in exactly one unit
     for reservation in reservations:
@@ -96,6 +107,11 @@ def optimize_category_max_units_free(units, slots, reservations):
                 if r1.id != r2.id and not (r1.reservation_to <= r2.reservation_from or r1.reservation_from >= r2.reservation_to):
                     prob += x[unit.id, r1.id] + x[unit.id, r2.id] <= 1, f"No_Overlap_{unit.id}_{r1.id}_{r2.id}"
     
+    # Ensure the unit_used variable reflects whether any reservation is assigned to the unit
+    for unit in units:
+        for reservation in reservations:
+            prob += x[unit.id, reservation.id] <= y[unit.id], f"Link_Unit_{unit.id}_Reservation_{reservation.id}"
+
     # Solve the problem
     prob.solve()
 
@@ -128,6 +144,90 @@ def optimize_category_max_units_free(units, slots, reservations):
     
     print("Optimization complete. PRINTING ASSIGMENT")
     return assignment_dict
+
+
+def optimize_category_free_time(units, slots, reservations):
+    print("free time")
+    # Create a linear programming problem
+    prob = pulp.LpProblem("Unit_Minimization", pulp.LpMinimize)
+    
+    # Create a binary variable for each unit to indicate if it's used
+    y = pulp.LpVariable.dicts("unit_used", [unit.id for unit in units], cat='Binary')
+
+    # New binary variables for free time slots
+    free_time = pulp.LpVariable.dicts("free_time",
+                                  ((unit.id, slot) for unit in units for slot in slots),
+                                  cat='Binary')
+
+
+    # Create a variable for each unit-reservation pair, where variable is 1 if the reservation is in the unit
+    x = pulp.LpVariable.dicts("unit_reservation", 
+                              ((unit.id, reservation.id) for unit in units for reservation in reservations),
+                              cat='Binary')
+    
+    # Modified Objective Function: maximize the length of continuous free time slots
+    prob += pulp.lpSum(free_time[unit.id, slot] for unit in units for slot in slots)
+
+    # Constraints for free time slots
+    for unit in units:
+        for slot in slots:
+            # If a slot is reserved, it can't be a free slot
+            prob += free_time[unit.id, slot] <= 1 - y[unit.id, slot]
+            
+            # If the previous slot is free, this slot can also be free
+            if slot > 0:  # Assuming 'slots' is a list of integers starting from 0 or 1
+                prob += free_time[unit.id, slot] <= free_time[unit.id, slot-1]
+
+
+    # Constraint: Each reservation must be in exactly one unit
+    for reservation in reservations:
+        prob += pulp.lpSum(x[unit.id, reservation.id] for unit in units) == 1, f"One_Unit_Per_Reservation_{reservation.id}"
+    
+    # Constraint: No overlapping reservations in any unit
+    for unit in units:
+        for r1 in reservations:
+            for r2 in reservations:
+                if r1.id != r2.id and not (r1.reservation_to <= r2.reservation_from or r1.reservation_from >= r2.reservation_to):
+                    prob += x[unit.id, r1.id] + x[unit.id, r2.id] <= 1, f"No_Overlap_{unit.id}_{r1.id}_{r2.id}"
+    
+    # Ensure the unit_used variable reflects whether any reservation is assigned to the unit
+    for unit in units:
+        for reservation in reservations:
+            prob += x[unit.id, reservation.id] <= y[unit.id], f"Link_Unit_{unit.id}_Reservation_{reservation.id}"
+
+    # Solve the problem
+    prob.solve()
+
+    # Retrieving and returning Xij values
+    assignment_dict = {(unit.id, reservation.id): pulp.value(x[unit.id, reservation.id]) for unit in units for reservation in reservations}
+    
+    
+    # Prepare to print results
+    unit_reservations = {}
+    for unit in units:
+        assigned_reservations = [reservation for reservation in reservations if pulp.value(x[unit.id, reservation.id]) == 1]
+        unit_reservations[unit.id] = assigned_reservations
+
+    # Print the results in a formatted table
+    print("------------TABLE---------------")
+    for unit_id, assigned_reservations in unit_reservations.items():
+        reservation_details = ", ".join(
+            f"Reservation from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
+            for reservation in assigned_reservations
+        )
+        print(f"unit{unit_id}: {reservation_details}")
+    print("------------TABLE END------------")    
+
+    # Apply the results to the slots
+    for slot in slots:
+        for unit in units:
+            if any(pulp.value(x[unit.id, reservation.id]) == 1 for reservation in reservations if slot.start_time >= reservation.reservation_from and slot.start_time < reservation.reservation_to):
+                slot.status = 'reserved'  # Mark slot as reserved if any reservation is scheduled in this slot
+                slot.reservation = reservation
+    
+    print("Optimization complete. PRINTING ASSIGMENT")
+    return assignment_dict
+
 
 # Remember to handle exceptions and edge cases in your actual implementation.
 def assign_optimized_reservations_to_slots(units, reservations, assignment_dict, slots):

@@ -160,6 +160,19 @@ def edit_category(request, offer_id=None, category_id=None):
         if form.is_valid():
             category = form.save(commit=False)
             category.belongs_to_offer = current_offer
+
+            # Before saving the category, let's handle the units.
+            desired_unit_count = form.cleaned_data.get('count_of_units')  # Assuming 'unit_count' is a field in your form
+
+            existing_unit_count = units.count()
+            units_to_add = desired_unit_count - existing_unit_count
+            
+            if units_to_add > 0:
+                # Here, add logic to create additional units for the category.
+                for _ in range(units_to_add):
+                    Unit.objects.create(belongs_to_category=category,)
+            
+
             category.save()
             success_message = (
                 f"Category '{category.category_name}' successfully edited."
@@ -413,7 +426,7 @@ def managed_reservations(request):
         Reservation.objects.filter(belongs_to_category__in=categories)
         .select_related("belongs_to_category", "belongs_to_category__belongs_to_offer")
         .order_by(
-            "belongs_to_category__belongs_to_offer__offer_name", "reservation_from"
+            "reservation_from","belongs_to_category__belongs_to_offer__offer_name" 
         )
     )
 
@@ -826,6 +839,10 @@ def cancel_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = "cancelled"
     reservation.save()
+    ReservationSlot.objects.filter(
+                    reservation=reservation,
+                    #status="pending"
+                ).update(status="available")
     delete_available_slots_for_category(reservation.belongs_to_category)
 
     context = {
@@ -1094,7 +1111,7 @@ def optimize(request):
     print("current_user: ",current_user)
     categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén")
     
-    start_day = timezone.now().date() + timezone.timedelta(days=1)
+    start_day = timezone.now().date() #+ timezone.timedelta(days=1)
 
     # Assuming you have a function to optimize categories
     try:

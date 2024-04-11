@@ -5,9 +5,10 @@
 
 <div class="container-md">
     <h1>Managed Reservations</h1>
+    <p>You can click on these reservations and confirm or delete them.</p>
 
     {% if reservations %}
-    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+    <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
 
         <table class="table table-hover">
             <thead>
@@ -20,6 +21,7 @@
                     <th scope="col">Reservation To</th>
                     <th scope="col">Customer Email</th>
                     <th scope="col">Created at</th>
+                    <th scope="col">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,6 +35,8 @@
                     <td>{{ reservation.reservation_to }}</td>
                     <td>{{ reservation.customer_email }}</td>
                     <td>{{ reservation.submission_time}}</td>
+                    <td>{{ reservation.status}}</td>
+
                     <!--<td>{{ reservation.verification_token}}</td>-->
                 </tr>
                 {% endfor %}
