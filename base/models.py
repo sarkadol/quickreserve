@@ -37,8 +37,6 @@ class Offer(models.Model):
             "manager_of_this_offer",
         )  # there cannot be two same named offers managed by the same user
 
-
-
 class Pricing(models.Model):
     # pricing_id = models.IntegerField(primary_key=True)
     pricing_name = models.CharField(max_length=50)
@@ -55,7 +53,9 @@ class Category(models.Model):
     category_description = models.CharField(max_length=1000, null=True, blank=True)
     category_capacity = models.IntegerField(default=1,help_text="How many reservations at one time are possible? e.g.seminar = 20 or parkplace = 1")
     max_simultneous_reservations = models.IntegerField(default=1)
-    additional_time = models.DurationField(null=True, blank=True)
+    additional_time = models.DurationField(null=True, blank=True,default=0) 
+    # blank=True, the field is allowed to be empty in forms
+    # null=True on a field allows the database to store a NULL value for that field
     count_of_units = models.IntegerField(default=1,help_text="How many units are there in this category? e.g. 5 parkplaces for disabled people")
     created_at = models.DateTimeField(default=timezone.now)
     unit_names = models.JSONField(default=list) # list of unit names

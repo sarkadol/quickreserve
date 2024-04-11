@@ -3,13 +3,15 @@ from datetime import datetime, timedelta
 
 # Django form and widget imports
 from django import forms
-from django.forms import ModelForm, DateInput, DateTimeInput, Select, widgets
+from django.forms import ModelForm, TimeInput, DateInput, DateTimeInput, Select, widgets
 
 # Django utilities
 from django.utils import timezone
 
 # Imports from your project's modules
 from . import models
+
+from django.core.exceptions import ValidationError
 
 
 TIME_CHOICES = [
@@ -124,4 +126,17 @@ class CategoryForm(ModelForm):
             "additional_time": widgets.DateInput(
                 attrs={"type": "time"}
             ),  # here must be time-duration picker, not time-picker
+            "opening_time": TimeInput(
+                attrs={"type": "time", "step": "3600"}  # Setting step to 3600 seconds (1 hour)
+            ),
+            "closing_time": TimeInput(
+                attrs={"type": "time", "step": "3600"}  # Same as above for consistency
+            )
         }
+    def clean(self):
+        cleaned_data = super().clean()
+        opening_time = cleaned_data.get('opening_time')
+        closing_time = cleaned_data.get('closing_time')
+        if opening_time and closing_time and opening_time > closing_time:
+            raise ValidationError("Opening time must be before closing time.")
+        return cleaned_data    

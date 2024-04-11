@@ -1,3 +1,4 @@
+# VIEWS.PY
 # Python standard library imports
 from datetime import datetime, time, timedelta
 import uuid
@@ -27,7 +28,12 @@ from django.urls import reverse
 from django.views.defaults import page_not_found
 
 # Django HTTP utilities and response handling
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect, JsonResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.template.loader import render_to_string
 
 
@@ -43,9 +49,9 @@ from django.core.mail import send_mail
 
 @login_required  # If a user is not logged in, Django will redirect them to the login page.
 def manager_home(request):
-    # if request.POST: #lze to napsat i třídami s medotou post a get, ne funkcemi, mozna jiny atribut nez method
-    # print("POSLANO")
-    # users = models.User.objects.all()
+    """
+    Render the homepage for a manager showing available offers, categories, and a form for creating reservations.
+    """
     offers = Offer.objects.filter(
         manager_of_this_offer=request.user
     )  # only offers of this user
@@ -73,6 +79,9 @@ def manager_home(request):
 
 @login_required
 def create_offer(request, offer_id=None):
+    """
+    Create a new offer or edit an existing one based on whether an offer_id is provided.
+    """
     form = forms.OfferForm()
     if request.method == "POST":
         form = forms.OfferForm(request.POST)
@@ -108,13 +117,20 @@ def create_offer(request, offer_id=None):
 
     return render(request, "create_offer.html", context={"form": form})
 
+
 @login_required
 def my_schedule(request):
+    """
+    Display the schedule for the logged-in manager, showing categories and reservation slots.
+    """
     return render(request, "my_schedule.html")
 
 
 @login_required
 def create_category(request, offer_id=None):
+    """
+    Create a new category under an offer specified by offer_id, handling form submission and validation.
+    """
     form = forms.CategoryForm()
     offer = get_object_or_404(Offer, pk=offer_id)
     offer_name = offer.offer_name
@@ -128,16 +144,30 @@ def create_category(request, offer_id=None):
             category.belongs_to_offer = offer
 
             # Process unit_names_input here
-            unit_names_input = form.cleaned_data.get('unit_names_input')
+            unit_names_input = form.cleaned_data.get("unit_names_input")
             # Parse the unit_names_input according to your chosen format
             # For example, if input is CSV:
-            unit_names_list = [name.strip() for name in unit_names_input.split(',')] if unit_names_input else []
+            unit_names_list = (
+                [name.strip() for name in unit_names_input.split(",")]
+                if unit_names_input
+                else []
+            )
             # Check if the length of unit names list matches count_of_units
             if len(unit_names_list) != category.count_of_units:
                 # If not, send an error message back to the form
-                messages.error(request, f"Number of unit names provided ({len(unit_names_list)}) does not match the count of units specified ({category.count_of_units}). Please correct and try again.")
-                return render(request, "create_category.html", context={"form": form, "offer_id": offer_id, "offer_name": offer_name})
-
+                messages.error(
+                    request,
+                    f"Number of unit names provided ({len(unit_names_list)}) does not match the count of units specified ({category.count_of_units}). Please correct and try again.",
+                )
+                return render(
+                    request,
+                    "create_category.html",
+                    context={
+                        "form": form,
+                        "offer_id": offer_id,
+                        "offer_name": offer_name,
+                    },
+                )
 
             category.unit_names = unit_names_list
 
@@ -160,6 +190,9 @@ def create_category(request, offer_id=None):
 
 @login_required
 def edit_category(request, offer_id=None, category_id=None):
+    """
+    Edit an existing category specified by category_id, under an offer specified by offer_id.
+    """
     current_offer = get_object_or_404(Offer, pk=offer_id)
     current_offer_name = current_offer.offer_name
     category = get_object_or_404(Category, pk=category_id)
@@ -170,10 +203,15 @@ def edit_category(request, offer_id=None, category_id=None):
 
     units = Unit.objects.filter(belongs_to_category=category)
 
+    # Get existing times from the category instance
+    old_opening_time = category.opening_time
+    old_closing_time = category.closing_time
+
     # Ensure the current user is the manager
     if category.belongs_to_offer.manager_of_this_offer != request.user:
         messages.error(request, "You are not authorized to edit this category.")
         return redirect("manager_home")  # Redirect to a safe page
+    
 
     # Assuming you want slots from 00:00 to 23:00, one hour intervals
     hours = [time(hour=h) for h in range(24)]
@@ -184,17 +222,27 @@ def edit_category(request, offer_id=None, category_id=None):
             category = form.save(commit=False)
             category.belongs_to_offer = current_offer
 
-            # Before saving the category, let's handle the units.
-            desired_unit_count = form.cleaned_data.get('count_of_units')  # Assuming 'unit_count' is a field in your form
+            # Check if opening or closing times have changed
+            new_opening_time = form.cleaned_data["opening_time"]
+            new_closing_time = form.cleaned_data["closing_time"]
+            time_changed = (new_opening_time != old_opening_time) or (
+                new_closing_time != old_closing_time
+            )  # TODO what if I change time?
+
+            # Before saving the category, check if there are existing units already
+            desired_unit_count = form.cleaned_data.get(
+                "count_of_units"
+            )  # Assuming 'unit_count' is a field in your form
 
             existing_unit_count = units.count()
             units_to_add = desired_unit_count - existing_unit_count
-            
+
             if units_to_add > 0:
                 # Here, add logic to create additional units for the category.
                 for _ in range(units_to_add):
-                    Unit.objects.create(belongs_to_category=category,)
-            
+                    Unit.objects.create(
+                        belongs_to_category=category,
+                    )
 
             category.save()
             success_message = (
@@ -251,6 +299,9 @@ def edit_category(request, offer_id=None, category_id=None):
 
 
 def new_reservation_timetable(request, offer_id=None, category_id=None):
+    """
+    Render a new reservation timetable for a specific offer and category, handling date selections and slot updates via AJAX.
+    """
     offer = get_object_or_404(Offer, pk=offer_id)
     category = get_object_or_404(Category, pk=category_id)
     opening_hour = category.opening_time.hour
@@ -267,8 +318,8 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
         # Call ensure_availability_for_day with the selected date
         ensure_availability_for_day(selected_date, category_id)
         print("ensure availability ", selected_date)
-        
-        units_with_slots=fetch_reservation_slots(selected_date,category)
+
+        units_with_slots = fetch_reservation_slots(selected_date, category)
 
         for unit_with_slots in units_with_slots:
             for slot in unit_with_slots["reservation_slots"]:
@@ -283,11 +334,12 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
                 "hours": hours,
                 "category_name": category.category_name,
                 "category_id": category_id,
-                #"unit_id": 2,
+                # "unit_id": 2,
             },
             request=request,
         )
         return JsonResponse({"html": html})
+    print("no request")
     return render(
         request,
         "new_reservation_timetable.html",
@@ -297,6 +349,9 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
 
 @login_required  # If a user is not logged in, Django will redirect them to the login page.
 def offer_detail(request, offer_id=None):
+    """
+    Display details of an offer specified by offer_id, allow editing if posted, and validate access by offer ownership.
+    """
     offer = get_object_or_404(Offer, pk=offer_id)
     offer_name = offer.offer_name
     form = forms.OfferForm(instance=offer)
@@ -340,6 +395,9 @@ def offer_detail(request, offer_id=None):
 
 @login_required
 def delete_category(request, offer_id=None, category_id=None):
+    """
+    Handle the deletion of a category specified by category_id, after confirming the manager's permission.
+    """
     category = get_object_or_404(Category, pk=category_id)
     offer = get_object_or_404(Offer, pk=category.belongs_to_offer.id)
     offer_id = offer.id
@@ -375,6 +433,9 @@ def delete_category(request, offer_id=None, category_id=None):
 
 @login_required
 def category_detail(request, category_id=None):
+    """
+    Display details of a category specified by category_id, including associated units and allowing for updates.
+    """
     category = get_object_or_404(Category, pk=category_id)
     category_name = category.category_name
     form = forms.CategoryForm(instance=category)
@@ -397,7 +458,7 @@ def category_detail(request, category_id=None):
 
     form = forms.CategoryForm(instance=category)
     # categories = Category.objects.filter(belongs_to_offer=offer)
-    units = Unit.objects.filter(belongs_to_category = category)
+    units = Unit.objects.filter(belongs_to_category=category)
 
     return render(
         request,
@@ -413,6 +474,9 @@ def category_detail(request, category_id=None):
 
 @login_required
 def delete_offer(request, offer_id=None):
+    """
+    Handle the deletion of an offer and its associated categories specified by offer_id, after confirming the manager's permission.
+    """
     offer = get_object_or_404(Offer, pk=offer_id)
     categories = Category.objects.filter(belongs_to_offer=offer)
     categories_names = ", ".join([category.category_name for category in categories])
@@ -439,6 +503,13 @@ def delete_offer(request, offer_id=None):
 
 @login_required
 def managed_reservations(request):
+    """
+    Display all reservations managed by the current user, categorized and ordered by their details.
+    """
+    # Assuming the user's profile has a timezone attribute
+    user_timezone = request.user.userprofile.timezone if hasattr(request.user, 'userprofile') else 'UTC'
+    timezone.activate(user_timezone)
+
     # Fetch all categories that belong to offers managed by the current user
     categories = Category.objects.filter(
         belongs_to_offer__manager_of_this_offer=request.user
@@ -448,8 +519,8 @@ def managed_reservations(request):
     reservations = (
         Reservation.objects.filter(belongs_to_category__in=categories)
         .select_related("belongs_to_category", "belongs_to_category__belongs_to_offer")
-        .order_by(
-            "reservation_from","belongs_to_category__belongs_to_offer__offer_name" 
+        .order_by("-submission_time",
+            "reservation_from", "belongs_to_category__belongs_to_offer__offer_name"
         )
     )
 
@@ -555,6 +626,9 @@ def new_reservation(request, offer_id=None, category_id=None):
 
 
 def get_available_slots(date, category_id):
+    """
+    Calculate and return available time slots for reservations for a given date and category.
+    """
     # Assuming each slot is 1 hour and category "tennis court" has daily availability from 8 AM to 18 PM
     start_time = time(8, 0)
     end_time = time(18, 0)
@@ -584,6 +658,9 @@ def get_available_slots(date, category_id):
 
 
 def create_reservation_slot(reservation):
+    """
+    Create or update reservation slots based on the provided reservation details.
+    """
     # Assuming each unit within a category has a similar schedule and can have overlapping reservations.
     category_units = reservation.belongs_to_category.unit_set.all()
     print("category units: ", category_units)
@@ -652,19 +729,10 @@ def create_reservation_slot(reservation):
     # return False
 
 
-def unit_exist(reservation):
-    # if there is a unit this reservation and has slots in this day return true
-    # so in another function it will be necessary to check if the times collide
-    # else return false
-    #
-    pass
-
-
-def assign_reservation():
-    pass
-
-
 def create_unit(category):
+    """
+    Create a new unit for the specified category if not exceeding the category's unit count.
+    """
     # category = reservation.belongs_to_category
     print("unit count", category.get_unit_count())
     unit_count = category.get_unit_count()
@@ -672,10 +740,10 @@ def create_unit(category):
     if unit_count < category.count_of_units:
         if len(category.unit_names) == 1 and category.count_of_units > 1:
             unit_name = category.unit_names[0]
-        elif len(category.unit_names) >= unit_count:
+        elif len(category.unit_names) > unit_count:
             unit_name = category.unit_names[unit_count]
         else:
-            unit_name=""    
+            unit_name = ""
 
         unit = Unit.objects.create(
             # unit_name="z23",  # Provide the unit name here - to be done
@@ -690,8 +758,10 @@ def create_unit(category):
         return None
 
 
-
 def reservation_details(request):
+    """
+    Display reservation details based on query parameters, providing a detailed view for specific reservations.
+    """
     # Extract parameters from the query string
     start_date = request.GET.get("start")
     end_date = request.GET.get("end")
@@ -702,8 +772,8 @@ def reservation_details(request):
         end_datetime = datetime.fromisoformat(end_date)
 
         # Format the datetime objects to a more readable format
-        readable_start = start_datetime.strftime('%B %d, %Y at %H:%M')
-        readable_end = end_datetime.strftime('%B %d, %Y at %H:%M')
+        readable_start = start_datetime.strftime("%B %d, %Y at %H:%M")
+        readable_end = end_datetime.strftime("%B %d, %Y at %H:%M")
 
     # Use the category_id to get the Category object and its name
     category = None
@@ -726,14 +796,18 @@ def reservation_details(request):
 
     return render(request, "reservation_details.html", context)
 
+
 @csrf_exempt
 def reserve_slot(request):
-    if request.method == 'POST':
+    """
+    Handle the reservation of a slot via POST, updating slot status and managing transaction integrity.
+    """
+    if request.method == "POST":
         start_time = request.GET.get("start")
         end_time = request.GET.get("end")
         category_id = request.GET.get("category")
         unit_id = request.GET.get("unit")
- 
+
     try:
         with transaction.atomic():  # Use a transaction to ensure data integrity
             # Fetch and update the slots
@@ -741,21 +815,27 @@ def reserve_slot(request):
                 unit_id=unit_id,
                 start_time__gte=start_time,
                 end_time__lte=end_time,
-                status='available'  # Assuming you only want to update available slots
+                status="available",  # Assuming you only want to update available slots
             ).update(
-                #reservation_id=reservation_id,
-                status='pending'
+                # reservation_id=reservation_id,
+                status="pending"
             )
 
-            return JsonResponse({
-                'status': 'success',
-                'message': f'Updated {updated_count} slots to pending.'
-            })
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": f"Updated {updated_count} slots to pending.",
+                }
+            )
 
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
 
 def verify_reservation(request, token):
+    """
+    Verify a reservation using a token, handle its confirmation or cancellation based on the token validity.
+    """
     reservation = get_object_or_404(Reservation, verification_token=token)
     start_date = reservation.reservation_from.strftime("%Y-%m-%d %H:%M")
     end_date = reservation.reservation_to.strftime("%Y-%m-%d %H:%M")
@@ -778,17 +858,17 @@ def verify_reservation(request, token):
     return render(request, "reservation_confirm_cancel.html", context)
 
 
-
-
-
 @require_POST
 def confirm_reservation(request, token):
+    """
+    Confirm a reservation by token, update slot statuses, and handle related category optimizations.
+    """
     try:
         # Attempt to retrieve the reservation using the provided token
         reservation = Reservation.objects.get(
             verification_token=token, status="pending"
         )
-        
+
         # Check if the link has expired (more than 1 hour since submission)
         if timezone.now() - reservation.submission_time > timedelta(
             hours=1
@@ -799,8 +879,7 @@ def confirm_reservation(request, token):
                 reservation.save()
 
                 ReservationSlot.objects.filter(
-                    reservation=reservation,
-                    status="pending"
+                    reservation=reservation, status="pending"
                 ).update(status="available")
 
             context = {
@@ -816,6 +895,8 @@ def confirm_reservation(request, token):
                 reservation.status = "confirmed"
                 reservation.save()
                 print("reservation saved")
+                #optimize_category(category, day_to_optimize)
+                optimize_category(reservation.belongs_to_category, reservation.reservation_from.date())
 
                 # Ensure availability and then process the slots
                 day = reservation.reservation_from.date()
@@ -827,40 +908,49 @@ def confirm_reservation(request, token):
                     unit__belongs_to_category=reservation.belongs_to_category,
                     start_time__gte=reservation.reservation_from,
                     end_time__lte=reservation.reservation_to,
-                    status="pending"
+                    status="pending",
                 )
 
                 if available_slots.exists():
-                    unit_to_reserve = available_slots.values("unit").annotate(total=Count("unit")).order_by("total").first()
-                    
+                    unit_to_reserve = (
+                        available_slots.values("unit")
+                        .annotate(total=Count("unit"))
+                        .order_by("total")
+                        .first()
+                    )
+
                     if unit_to_reserve:
                         available_slots.filter(unit_id=unit_to_reserve["unit"]).update(
-                            reservation=reservation,
-                            status="reserved"
+                            reservation=reservation, status="reserved"
                         )
 
                         # Optional: Clear or adjust other slots
-                        delete_available_slots_for_category(reservation.belongs_to_category)
+                        delete_available_slots_for_category(
+                            reservation.belongs_to_category
+                        )
 
                 context = {
                     "header": "Reservation confirmed",
                     "message": "Your reservation has been successfully confirmed.",
                 }
                 return render(request, "reservation_status.html", context)
-            
+
     except Reservation.DoesNotExist:
         return HttpResponse("Invalid or expired link.")
 
 
 @require_POST
 def cancel_reservation(request, token):
+    """
+    Cancel a reservation by token, update related slot statuses, and handle cleanup processes.
+    """
     reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = "cancelled"
     reservation.save()
     ReservationSlot.objects.filter(
-                    reservation=reservation,
-                    #status="pending"
-                ).update(status="available")
+        reservation=reservation,
+        # status="pending"
+    ).update(status="available")
     delete_available_slots_for_category(reservation.belongs_to_category)
 
     context = {
@@ -871,9 +961,10 @@ def cancel_reservation(request, token):
     return render(request, "reservation_status.html", context)
 
 
-
-
 def submit_reservation(request):
+    """
+    Handle the submission of a reservation form, send verification email, and provide user feedback.
+    """
     print("submitting reservation")
     if request.method == "POST":
         customer_name = request.POST.get("name")
@@ -926,7 +1017,7 @@ def submit_reservation(request):
             email_body,
             settings.DEFAULT_FROM_EMAIL,
             [customer_email],
-            fail_silently=False,  
+            fail_silently=False,
             # fail_silently=False means your application wants to be informed of any problems during the email sending process
         )
         # success_message = (   f'Please check your email "{customer_email}" to confirm the reservation.' )
@@ -940,8 +1031,7 @@ def submit_reservation(request):
 
 def create_slots_for_unit(unit, day, opening_time, closing_time):
     """
-    Create reservation slots for the given unit and day.
-    Slots are marked as "available" during opening hours and "closed" outside of opening hours.
+    Create reservation slots for a specific unit on a given day within specified opening hours.
     """
     # Define the start and end times for the day based on the provided opening and closing times
     start_of_day = timezone.make_aware(datetime.combine(day, opening_time))
@@ -956,7 +1046,7 @@ def create_slots_for_unit(unit, day, opening_time, closing_time):
         slot_exists = ReservationSlot.objects.filter(
             unit=unit, start_time=current_time
         ).exists()
-        
+
         # Check if current_time is within opening hours
         if start_of_day <= current_time < end_of_day:
             if not slot_exists:
@@ -970,9 +1060,10 @@ def create_slots_for_unit(unit, day, opening_time, closing_time):
                 ReservationSlot.objects.create(
                     unit=unit, start_time=current_time, status="closed"
                 )
-        
+
         # Move to the next hour
         current_time += timedelta(hours=1)
+
 
 def ensure_availability_for_day(day, category_id):
     """
@@ -1031,29 +1122,32 @@ def delete_available_slots_for_category(category):
         f"{deleted_slots_count[0]} slots deleted from {slots_before_deletion} available slots in category '{category}'."
     )
 
+
 @login_required
 def my_schedule(request):
     offers = Offer.objects.filter(manager_of_this_offer=request.user)
-    offer_ids = offers.values_list('id', flat=True)
+    offer_ids = offers.values_list("id", flat=True)
     categories = Category.objects.filter(belongs_to_offer__id__in=offer_ids)
     context = {
         "categories": categories,
     }
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        category_id = request.GET.get('category_id')
-        selected_date_str = request.GET.get('selected_date')
-        print("category ID: ",category_id)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        category_id = request.GET.get("category_id")
+        selected_date_str = request.GET.get("selected_date")
+        print("category ID: ", category_id)
         # If no category_id is provided, use the default category
         if not category_id:
             try:
                 # Attempt to get the first category by ID as a default
-                default_category = categories.order_by('id').first()
+                default_category = categories.order_by("id").first()
                 if default_category:
                     category_id = default_category.id
                 else:
                     # Handle the case where there are no categories
-                    return JsonResponse({"error": "No categories available"}, status=400)
+                    return JsonResponse(
+                        {"error": "No categories available"}, status=400
+                    )
             except ObjectDoesNotExist:
                 return JsonResponse({"error": "Default category not found"}, status=400)
 
@@ -1061,23 +1155,23 @@ def my_schedule(request):
             selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
             category = get_object_or_404(Category, pk=category_id)
             ensure_availability_for_day(selected_date, category_id)
-            units_with_slots=fetch_reservation_slots(selected_date,category)
+            units_with_slots = fetch_reservation_slots(selected_date, category)
             hours = [time(hour=h) for h in range(24)]
-
 
             # Render the reservations and units/slots data to the template
             html = render_to_string(
-                'reservations_table.html',  # This template should be set up to handle both units and their reservations.
+                "reservations_table.html",  # This template should be set up to handle both units and their reservations.
                 {
                     "units_with_slots": units_with_slots,  # Each unit has 'slots' containing reservations for the selected date.
                     "selected_date": selected_date,
                     "hours": hours,
                 },
-                request=request
+                request=request,
             )
             return JsonResponse({"html": html})
 
     return render(request, "my_schedule.html", context)
+
 
 def fetch_reservation_slots(selected_date, category):
     start_of_day = timezone.make_aware(datetime.combine(selected_date, time.min))
@@ -1094,35 +1188,41 @@ def fetch_reservation_slots(selected_date, category):
     ]
     return units_with_slots
 
+
 @login_required
-def customer_home(request,manager_id=None):
+def customer_home(request, manager_id=None):
     # Fetch the manager and associated categories
-    """user_id = request.user.id    
+    """user_id = request.user.id
     offers = Offer.objects.filter(
         manager_of_this_offer=request.user
     )"""
-    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=request.user).distinct()
-
+    categories = Category.objects.filter(
+        belongs_to_offer__manager_of_this_offer=request.user
+    ).distinct()
 
     # Render the categories in a template
-    return render(request, 'customer_home.html', {'categories': categories})
+    return render(request, "customer_home.html", {"categories": categories})
+
 
 @login_required
 def manager_link(request, manager_id=None):
     # Build the base part of the URL dynamically
     base_url = f"{request.scheme}://{request.get_host()}"
     # Construct the full path with the manager_id
-    link = f"{base_url}/customer_home/{manager_id}"    
-    return render(request, 'manager_link.html', {'link': link})
+    link = f"{base_url}/customer_home/{manager_id}"
+    return render(request, "manager_link.html", {"link": link})
 
-#@login_required
+
+# @login_required
 def optimize(request):
     print("optimized clicked")
     current_user = request.user
-    print("current_user: ",current_user)
-    categories = Category.objects.filter(belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén")
-    
-    start_day = timezone.now().date() #+ timezone.timedelta(days=1)
+    print("current_user: ", current_user)
+    categories = Category.objects.filter(
+        belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén"
+    )
+
+    start_day = timezone.now().date()  # + timezone.timedelta(days=1)
 
     # Assuming you have a function to optimize categories
     try:
@@ -1130,9 +1230,9 @@ def optimize(request):
             day_to_optimize = start_day + timezone.timedelta(days=i)
             for category in categories:
                 # Optimize each category for the current day in the loop
-                print("OPTIMALIZUJI DEN",day_to_optimize)
-                optimize_category(category,day_to_optimize)
-            
+                print("OPTIMALIZUJI DEN", day_to_optimize)
+                optimize_category(category, day_to_optimize)
+
         print("HOTOVO")
         success_message = "Categories successfully optimized."
         messages.success(request, success_message)
@@ -1143,4 +1243,6 @@ def optimize(request):
         messages.error(request, error_message)
 
     # Redirect to a new URL where messages can be displayed or refresh the same page
-    return render(request, 'manager_link.html') # Replace 'some-view-name' with the actual view you want to redirect to
+    return render(
+        request, "manager_link.html"
+    )  # Replace 'some-view-name' with the actual view you want to redirect to

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     //console.log("loaded")
     preventButtonEventPropagation('.btn-reservation-calendar', '/new_reservation_timetable/');
-    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/');
+    preventButtonEventPropagation('.btn-reservation-form', '/new_reservation/'); //this button is hidden
 
     
     // Prevent default action for buttons in clickable table rows and navigate programmatically

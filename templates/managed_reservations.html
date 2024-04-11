@@ -34,7 +34,7 @@
                     <td>{{ reservation.reservation_from }}</td>
                     <td>{{ reservation.reservation_to }}</td>
                     <td>{{ reservation.customer_email }}</td>
-                    <td>{{ reservation.submission_time}}</td>
+                    <td>{{ reservation.submission_time|date:"Y-m-d H:i" }}</td>
                     <td>{{ reservation.status}}</td>
 
                     <!--<td>{{ reservation.verification_token}}</td>-->
