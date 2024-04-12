@@ -45,7 +45,7 @@ def optimize_category(category, day=None):  # day = today as default value
     # print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
 
     # optimize function  SELECT
-    optimized_reservations_to_units = optimize_category_max_units_free(
+    optimized_reservations_to_units = optimize_category_min_units(
         units, slots, reservations
     )
     # optimized_reservations_to_units =optimize_category_free_time(units, slots, reservations) #not working yet
@@ -94,7 +94,7 @@ def get_day_start_end(day=None):
     return day_start, day_end
 
 
-def optimize_category_max_units_free(units, slots, reservations):
+def optimize_category_min_units(units, slots, reservations):
     # Create a linear programming problem
     prob = pulp.LpProblem("Unit_Minimization", pulp.LpMinimize)
 
@@ -112,7 +112,13 @@ def optimize_category_max_units_free(units, slots, reservations):
     # prob += pulp.lpSum(x[unit.id, reservation.id] for unit in units for reservation in reservations)
 
     # Objective Function: Minimize the number of units used
-    prob += pulp.lpSum(y[unit.id] for unit in units)
+    #prob += pulp.lpSum(y[unit.id] for unit in units)
+
+    # Define the objective function as a summation of decision variables
+    objective = pulp.lpSum(y[unit.id] for unit in units)
+
+    # Explicitly set the objective function
+    prob.setObjective(objective)
 
     # Constraint: Each reservation must be in exactly one unit
     for reservation in reservations:

@@ -1223,7 +1223,7 @@ def optimize(request):
     )
 
     start_day = timezone.now().date()  # + timezone.timedelta(days=1)
-
+    start_day = date(2024,4,11)
     # Assuming you have a function to optimize categories
     try:
         for i in range(1):  # Loop through the next 7 days from today
