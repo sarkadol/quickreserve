@@ -52,7 +52,7 @@ class Category(models.Model):
     category_name = models.CharField(max_length=50)
     category_description = models.CharField(max_length=1000, null=True, blank=True)
     category_capacity = models.IntegerField(default=1,help_text="How many reservations at one time are possible? e.g.seminar = 20 or parkplace = 1")
-    max_simultneous_reservations = models.IntegerField(default=1)
+    max_simultaneous_reservations = models.IntegerField(default=1)
     additional_time = models.DurationField(null=True, blank=True,default=0) 
     # blank=True, the field is allowed to be empty in forms
     # null=True on a field allows the database to store a NULL value for that field
