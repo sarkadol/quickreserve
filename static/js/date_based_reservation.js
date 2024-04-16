@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
             currentCell.style.backgroundColor = '#ccffcc';
             currentCell = currentCell.nextElementSibling;
         }
-        //console.log("Range highlighted.");
     }
 
     // Simulate form submission to load the reservation table
@@ -186,7 +185,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     startCell = cell;
                     currentUnitId = unitId;
                     cell.style.backgroundColor = '#ccffcc';
-                    //console.log("Start time set for unit ID:", unitId, "at hour:", cell.getAttribute('data-hour'));
                 } else {
                     if (!startCell) {
                         startCell = cell;

@@ -339,7 +339,6 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
             request=request,
         )
         return JsonResponse({"html": html})
-    print("no request")
     return render(
         request,
         "new_reservation_timetable.html",
@@ -947,6 +946,18 @@ def cancel_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = "cancelled"
     reservation.save()
+
+    # Retrieve the slots that are about to be updated
+    slots_to_update = ReservationSlot.objects.filter(
+        reservation=reservation
+    )
+    print("mažu")
+    # Print each slot detail before updating
+    for slot in slots_to_update:
+        print(f"Updating slot {slot.id} from {slot.status} to available")
+    # z nějakého důvodu to funguje jen pro zrušení dříve potvrzených rezervací, ale ne těch co jsou pending
+    # TODO
+
     ReservationSlot.objects.filter(
         reservation=reservation,
         # status="pending"

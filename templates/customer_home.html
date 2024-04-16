@@ -4,11 +4,11 @@
 
 {% block content %}
 
-<div class="container-md">
+<div class="container-sm">
     <h1> Customer home </h1>
     <p>this is what customer's view look like.</p>
     
-    <h2>My categories</h2>
+    <h2>Make a reservation</h2>
     {% if categories %}
 
     <table class="table table-hover">
@@ -17,7 +17,7 @@
                 <th scope="col">#</th>
                 <th scope="col">Category name</th>
                 <th scope="col">Offer</th>
-                <th scope="col">Max simultneous reservations</th>
+                <!--<th scope="col">Max simultneous reservations</th>-->
                 
                
                
@@ -34,14 +34,13 @@
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ category.category_name }} </td>
                 <td>{{ category.belongs_to_offer }} </td>
-                <td>{{ category.max_simultaneous_reservations }} </td>
+                <!--<td>{{ category.max_simultaneous_reservations }} </td>-->
                 
                
                 
 
-                <td> <button class="btn btn-primary btn-reservation-calendar"
-                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New
-                        reservation timetable</button>
+                <td> <button class="btn btn-success btn-reservation-calendar" style="width: 150px;"
+                        data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">  Reserve  </button>
 
                 </td>
             </tr>
