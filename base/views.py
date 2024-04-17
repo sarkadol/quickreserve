@@ -895,12 +895,18 @@ def confirm_reservation(request, token):
                 reservation.save()
                 print("reservation saved")
                 #optimize_category(category, day_to_optimize)
-                optimize_category(reservation.belongs_to_category, reservation.reservation_from.date())
+                print("před optimize_category DEN JE ",reservation.reservation_from.date())
+                #strategy=request.user.managerprofile.optimization_strategy 
+                strategy = reservation.belongs_to_category.belongs_to_offer.manager_of_this_offer.managerprofile.optimization_strategy 
+
+                optimize_category(reservation.belongs_to_category,strategy ,reservation.reservation_from.date())
 
                 # Ensure availability and then process the slots
                 day = reservation.reservation_from.date()
                 category_id = reservation.belongs_to_category.id
+                print("confirm DEN JE ",day)
                 ensure_availability_for_day(day, category_id)
+                
 
                 # Identify and update pending slots to reserved
                 available_slots = ReservationSlot.objects.filter(
@@ -1045,6 +1051,7 @@ def create_slots_for_unit(unit, day, opening_time, closing_time):
     Create reservation slots for a specific unit on a given day within specified opening hours.
     """
     # Define the start and end times for the day based on the provided opening and closing times
+    print("create slots DEN JE ",day)
     start_of_day = timezone.make_aware(datetime.combine(day, opening_time))
     end_of_day = timezone.make_aware(datetime.combine(day, closing_time))
 
@@ -1085,6 +1092,7 @@ def ensure_availability_for_day(day, category_id):
     print("cat ID", category_id)
     belongs_to_category = get_object_or_404(Category, pk=category_id)
     print(belongs_to_category)
+    print("ensure DEN JE ",day)
 
     opening_time = belongs_to_category.opening_time
     closing_time = belongs_to_category.closing_time
@@ -1233,12 +1241,13 @@ def optimize(request):
 
     print("current_user: ", current_user)
     categories = Category.objects.filter(
-        belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén"
+        belongs_to_offer__manager_of_this_offer=current_user, category_name="Tenisový kurt"
     )
 
     start_day = timezone.now().date()  # + timezone.timedelta(days=1)
-    start_day = date(2024,4,11)
-    strategy="equally_distributed"
+    start_day = date(2024,4,16)
+    #strategy="equally_distributed"
+    strategy=request.user.managerprofile.optimization_strategy 
     # Assuming you have a function to optimize categories
     try:
         for i in range(1):  # Loop through the next 7 days from today
