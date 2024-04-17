@@ -16,6 +16,17 @@ from django.utils import timezone
     category = models.ForeignKey('Category', on_delete=models.CASCADE)"""
 # probably do not need this, as the pricing is like ForeignKey in Category
 
+class ManagerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='managerprofile')
+    optimization_strategy = models.CharField(max_length=30, default='min_units', choices=[
+        ('min_units', 'Minimal units usage'),
+        ('equally_distributed', 'Equally distributed reservations')
+    ])
+    manager_link = models.URLField(max_length=200, blank=True)
+
+
+    def __str__(self):
+        return self.user.username
 
 class Offer(models.Model):
     # offer_id = models.IntegerField(primary_key=True)

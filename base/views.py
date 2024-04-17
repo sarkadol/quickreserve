@@ -1221,13 +1221,16 @@ def manager_link(request, manager_id=None):
     base_url = f"{request.scheme}://{request.get_host()}"
     # Construct the full path with the manager_id
     link = f"{base_url}/customer_home/{manager_id}"
-    return render(request, "manager_link.html", {"link": link})
+    profile = request.user.managerprofile 
+    return render(request, "manager_link.html", {'profile': profile})
 
 
 # @login_required
 def optimize(request):
     print("optimized clicked")
     current_user = request.user
+    profile = request.user.managerprofile 
+
     print("current_user: ", current_user)
     categories = Category.objects.filter(
         belongs_to_offer__manager_of_this_offer=current_user, category_name="bazén"
@@ -1235,6 +1238,7 @@ def optimize(request):
 
     start_day = timezone.now().date()  # + timezone.timedelta(days=1)
     start_day = date(2024,4,11)
+    strategy="equally_distributed"
     # Assuming you have a function to optimize categories
     try:
         for i in range(1):  # Loop through the next 7 days from today
@@ -1242,7 +1246,7 @@ def optimize(request):
             for category in categories:
                 # Optimize each category for the current day in the loop
                 print("OPTIMALIZUJI DEN", day_to_optimize)
-                optimize_category(category, day_to_optimize)
+                optimize_category(category, strategy,day_to_optimize)
 
         print("HOTOVO")
         success_message = "Categories successfully optimized."
@@ -1255,5 +1259,19 @@ def optimize(request):
 
     # Redirect to a new URL where messages can be displayed or refresh the same page
     return render(
-        request, "manager_link.html"
+        request, "manager_link.html",{'profile':profile}
+        
     )  # Replace 'some-view-name' with the actual view you want to redirect to
+
+def save_optimization_strategy(request):
+    print("save_optimization_strategy")
+    if request.method == "POST":
+        strategy = request.POST.get('optimizationStrategy')
+        profile = request.user.managerprofile  # Adjusted to use managerprofile
+        profile.optimization_strategy = strategy
+        profile.save()
+        message="Your optimization strategy has been updated to: " + profile.get_optimization_strategy_display()
+        messages.success(request, message)
+        #return redirect('manager_link',{'current_strategy': strategy})
+        return render(request, 'manager_link.html',{'profile': profile})  # Redirect to the appropriate settings page or wherever suitable
+    return render(request, 'manager_link.html',{'profile': profile})  # Render settings page on GET or if POST fails

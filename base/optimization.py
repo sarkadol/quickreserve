@@ -12,7 +12,7 @@ from django.utils import timezone
 from .models import Category, Unit, ReservationSlot, Reservation
 
 
-def optimize_category(category, day=None):  # day = today as default value
+def optimize_category(category, strategy,day=None):  # day = today as default value
     from base.views import create_slots_for_unit, delete_available_slots_for_category
 
     print("Starting optimization")
@@ -48,6 +48,17 @@ def optimize_category(category, day=None):  # day = today as default value
     optimized_reservations_to_units = optimize_category_min_units(
         units, slots, reservations
     )
+
+    if strategy == "min_units":
+        optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
+        print("min_units STRATEGY")
+    elif strategy == "equally_distributed":
+        #optimized_reservations_to_units = optimize_category_equally_distributed(units, slots, reservations)
+        optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
+
+        print("equally_distributed STRATEGY")
+
+
     # optimized_reservations_to_units =optimize_category_free_time(units, slots, reservations) #not working yet
     # optimized_reservations_to_units =optimize_category_equally_distributed(units, slots, reservations)
 

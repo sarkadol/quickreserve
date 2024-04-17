@@ -27,6 +27,7 @@ urlpatterns = [
     path('manager_link/<int:manager_id>', views.manager_link, name='manager_link'),
     path('optimize', views.optimize, name='optimize'),
     path('reserve-slot', views.reserve_slot, name='reserve_slot'),
+    path('save_optimization_strategy', views.save_optimization_strategy, name='save_optimization_strategy'),
 
 
    

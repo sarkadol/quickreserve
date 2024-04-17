@@ -6,11 +6,14 @@ from .forms import LoginForm,RegisterForm
 # https://www.pythontutorial.net/django-tutorial/django-registration/
 def sign_up(request):
     if request.method == 'GET':
-        form = RegisterForm()
+        #form = RegisterForm()
+        form = RegisterForm(base_url=request.build_absolute_uri('/'))
+
         return render(request, 'users/register.html', {'form': form})    
    
     if request.method == 'POST':
-        form = RegisterForm(request.POST) 
+        #form = RegisterForm(request.POST) 
+        form = RegisterForm(base_url=request.build_absolute_uri('/'), data=request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower() # make the user name lowercase before saving it in the database
