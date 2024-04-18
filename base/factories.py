@@ -41,7 +41,7 @@ class CategoryFactory(factory.django.DjangoModelFactory):
     category_description = factory.Faker("text")
     category_capacity = 20
     max_simultaneous_reservations = 5
-    count_of_units = 5
+    count_of_units = 20
     belongs_to_offer = factory.SubFactory(OfferFactory)
 
 

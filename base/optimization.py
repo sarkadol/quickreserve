@@ -52,7 +52,7 @@ def optimize_category(category, strategy,day=None):  # day = today as default va
 
     if strategy == "min_units":
         optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
-        print("min_units OPT_STRATEGY")
+       # print("min_units OPT_STRATEGY")
     elif strategy == "equally_distributed":
         optimized_reservations_to_units = optimize_category_equally_distributed(units, slots, reservations)
         #optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
@@ -163,49 +163,57 @@ def optimize_category_min_units(units, slots, reservations):
             )
 
     # Solve the problem
-    prob.solve()
+    #prob.solve()
+    # Solve the problem
+    status = prob.solve()
 
-    # Retrieving and returning Xij values
-    assignment_dict = {
-        (unit.id, reservation.id): pulp.value(x[unit.id, reservation.id])
-        for unit in units
-        for reservation in reservations
-    }
-
-    # Prepare to print results
-    unit_reservations = {}
-    for unit in units:
-        assigned_reservations = [
-            reservation
+    # Check if no solution was found
+    if status == pulp.LpStatusInfeasible:
+        print("NO FEASIBLE SOLUTION FOUND")
+        assignment_dict = {}
+        return assignment_dict
+    else:
+        # Retrieving and returning Xij values
+        assignment_dict = {
+            (unit.id, reservation.id): pulp.value(x[unit.id, reservation.id])
+            for unit in units
             for reservation in reservations
-            if pulp.value(x[unit.id, reservation.id]) == 1
-        ]
-        unit_reservations[unit.id] = assigned_reservations
+        }
 
-    # Print the results in a formatted table
-    print("------------TABLE---------------")
-    for unit_id, assigned_reservations in unit_reservations.items():
-        reservation_details = ", ".join(
-            f"Reservation from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
-            for reservation in assigned_reservations
-        )
-        print(f"unit{unit_id}: {reservation_details}")
-    print("------------TABLE END------------")
-
-    # Apply the results to the slots
-    for slot in slots:
+        # Prepare to print results
+        unit_reservations = {}
         for unit in units:
-            if any(
-                pulp.value(x[unit.id, reservation.id]) == 1
+            assigned_reservations = [
+                reservation
                 for reservation in reservations
-                if slot.start_time >= reservation.reservation_from
-                and slot.start_time < reservation.reservation_to
-            ):
-                slot.status = "reserved"  # Mark slot as reserved if any reservation is scheduled in this slot
-                slot.reservation = reservation
+                if pulp.value(x[unit.id, reservation.id]) == 1
+            ]
+            unit_reservations[unit.id] = assigned_reservations
 
-    print("Optimization complete. PRINTING ASSIGMENT")
-    return assignment_dict
+        # Print the results in a formatted table
+        print("------------TABLE---------------")
+        for unit_id, assigned_reservations in unit_reservations.items():
+            reservation_details = ", ".join(
+                f"Reservation from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
+                for reservation in assigned_reservations
+            )
+            print(f"unit{unit_id}: {reservation_details}")
+        print("------------TABLE END------------")
+
+        # Apply the results to the slots
+        for slot in slots:
+            for unit in units:
+                if any(
+                    pulp.value(x[unit.id, reservation.id]) == 1
+                    for reservation in reservations
+                    if slot.start_time >= reservation.reservation_from
+                    and slot.start_time < reservation.reservation_to
+                ):
+                    slot.status = "reserved"  # Mark slot as reserved if any reservation is scheduled in this slot
+                    slot.reservation = reservation
+
+        print("Optimization complete. PRINTING ASSIGMENT")
+        return assignment_dict
 
 
 def optimize_category_free_time(units, slots, reservations):

@@ -1,3 +1,4 @@
+from random import randint
 from django.test import TestCase
 from base.factories import (
     CategoryFactory,
@@ -24,12 +25,14 @@ from base.models import Category, Unit, Reservation, ReservationSlot
 from base.optimization import optimize_category
 from datetime import datetime, timedelta, time
 from django.utils import timezone
+import time as time_module
+
 
 class OptimizationTests(TestCase):
     def setUp(self):
         """Set up the necessary objects for the optimization tests."""
         self.category = CategoryFactory()
-        self.units = UnitFactory.create_batch(5, belongs_to_category=self.category)
+        self.units = UnitFactory.create_batch(2, belongs_to_category=self.category)
         self.day = timezone.now().date()
 
         # Create slots for each unit using the actual application logic
@@ -39,28 +42,29 @@ class OptimizationTests(TestCase):
             create_slots_for_unit(unit, self.day, opening_time, closing_time)
             print("Slot created")
         # Correcting reservation times
-        self.reservations = [
-            ReservationFactory(
+            
+        # Create 100 reservations with random start times and durations
+        self.reservations = []
+        for _ in range(2):
+            start_hour = randint(0, 22)  # Reserve up to the 22nd hour to allow at least 1 hour duration
+            duration_hours = randint(1, 2)  # Duration between 1 and 2 hours
+            reservation_start = timezone.make_aware(datetime.combine(self.day, time(start_hour, 0)))
+            reservation_end = reservation_start + timedelta(hours=duration_hours)
+            reservation = ReservationFactory(
                 belongs_to_category=self.category,
-                reservation_from=timezone.make_aware(datetime.combine(self.day, time(10, 0))),
-                reservation_to=timezone.make_aware(datetime.combine(self.day, time(12, 0)))
-            ),
-            ReservationFactory(
-                belongs_to_category=self.category,
-                reservation_from=timezone.make_aware(datetime.combine(self.day, time(13, 0))),
-                reservation_to=timezone.make_aware(datetime.combine(self.day, time(17, 0)))
-            ),
-            ReservationFactory(
-                belongs_to_category=self.category,
-                reservation_from=timezone.make_aware(datetime.combine(self.day, time(16, 0))),
-                reservation_to=timezone.make_aware(datetime.combine(self.day, time(18, 0)))
+                reservation_from=reservation_start,
+                reservation_to=reservation_end
             )
-        ]    
+            self.reservations.append(reservation)
 
 
     def test_optimize_category_min_units(self):
         """Test the min_units optimization strategy."""
+
+        start_time = time_module.time()  # Start timing using the time module
         optimize_category(self.category, 'min_units', self.day)
+        end_time = time_module.time()  # Start timing using the time module
+
 
         # Retrieve all slots post-optimization to check assignments
         all_slots = ReservationSlot.objects.filter(unit__belongs_to_category=self.category, start_time__date=self.day)
@@ -79,5 +83,6 @@ class OptimizationTests(TestCase):
         used_units = {slot.unit.id for slot in all_slots if slot.reservation}
         print(f"Used units: {used_units}")
         self.assertTrue(len(used_units) <= len(self.reservations), "More units used than necessary")
+        print("Duration: ",end_time-start_time," seconds")
 
         print("Optimization test for min_units strategy passed.")
