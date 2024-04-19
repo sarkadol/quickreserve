@@ -8,7 +8,7 @@ import pytz
 
 # Imports from my project's modules
 from . import forms, models
-from .models import Category, Offer, Reservation, ReservationSlot, Unit
+from .models import Category, Offer, Reservation, ReservationSlot, Unit, User
 from base.optimization import *
 
 # Django messaging and contributions
@@ -314,6 +314,8 @@ def new_reservation_timetable(request, offer_id=None, category_id=None):
         selected_date_str = request.GET.get("selected_date")
         # Make sure to parse the selected_date_str to a datetime.date object correctly
         selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+        if selected_date < timezone.now().date():
+                messages.error(request, "You cannot make a reservation for a past date.")
 
         # Call ensure_availability_for_day with the selected date
         ensure_availability_for_day(selected_date, category_id)
@@ -898,7 +900,7 @@ def confirm_reservation(request, token):
                 #strategy=request.user.managerprofile.optimization_strategy 
                 strategy = reservation.belongs_to_category.belongs_to_offer.manager_of_this_offer.managerprofile.optimization_strategy 
 
-                optimize_category(reservation.belongs_to_category,strategy ,reservation.reservation_from.date())
+                optimize_category(reservation.belongs_to_category ,reservation.reservation_from.date())
 
                 # Ensure availability and then process the slots
                 day = reservation.reservation_from.date()
@@ -1204,15 +1206,17 @@ def fetch_reservation_slots(selected_date, category):
     return units_with_slots
 
 
-@login_required
+#@login_required
 def customer_home(request, manager_id=None):
     # Fetch the manager and associated categories
     """user_id = request.user.id
     offers = Offer.objects.filter(
         manager_of_this_offer=request.user
     )"""
+    manager = get_object_or_404(User, id=manager_id)
+
     categories = Category.objects.filter(
-        belongs_to_offer__manager_of_this_offer=request.user
+        belongs_to_offer__manager_of_this_offer=manager
     ).distinct()
 
     # Render the categories in a template
@@ -1240,18 +1244,17 @@ def optimize(request):
         belongs_to_offer__manager_of_this_offer=current_user, category_name="Tenisový kurt"
     )
 
-    start_day = timezone.now().date()  # + timezone.timedelta(days=1)
-    start_day = date(2024,4,16)
+    start_day = timezone.now().date() + timezone.timedelta(days=1)
+    #start_day = date(2024,4,16)
     #strategy="equally_distributed"
     strategy=request.user.managerprofile.optimization_strategy 
     # Assuming you have a function to optimize categories
     try:
-        for i in range(1):  # Loop through the next 7 days from today
-            day_to_optimize = start_day + timezone.timedelta(days=i)
-            for category in categories:
-                # Optimize each category for the current day in the loop
-                print("OPTIMALIZUJI DEN", day_to_optimize)
-                optimize_category(category, strategy,day_to_optimize)
+        # Optimizing only for tomorrow
+        day_to_optimize = start_day
+        for category in categories:
+            print("Optimizing for date:", day_to_optimize)
+            optimize_category(category, day_to_optimize)
 
         print("HOTOVO")
         success_message = "Categories successfully optimized."
@@ -1280,3 +1283,17 @@ def save_optimization_strategy(request):
         #return redirect('manager_link',{'current_strategy': strategy})
         return render(request, 'manager_link.html',{'profile': profile})  # Redirect to the appropriate settings page or wherever suitable
     return render(request, 'manager_link.html',{'profile': profile})  # Render settings page on GET or if POST fails
+
+def send_reminder_emails():
+    tomorrow = timezone.now().date() + timedelta(days=1)
+    reservations = Reservation.objects.filter(reservation_from__date=tomorrow, status='confirmed')
+    for reservation in reservations:
+        unit = Unit.objects.filter(reservation=reservation).first()
+        if unit:
+            send_mail(
+                subject=f'Reminder: Upcoming Reservation at {reservation.belongs_to_category.category_name}',
+                message=f'Hello {reservation.customer_name},\n\nThis is a reminder that you have a reservation tomorrow at {reservation.reservation_from.strftime("%Y-%m-%d %H:%M")}. Your assigned unit is {unit.unit_name}.\n\nBest regards,\n{reservation.belongs_to_offer.manager_of_this_offer.username}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[reservation.customer_email],
+                fail_silently=False,
+            )

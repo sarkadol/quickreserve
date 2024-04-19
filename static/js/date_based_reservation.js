@@ -25,9 +25,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         // Check if the dateInput element exists
         if (dateInput) {
             const date = new Date();
+            date.setDate(date.getDate() + 1); // Set date to tomorrow
             const today = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
                 .toISOString()
                 .split("T")[0];
+            dateInput.min = today;  // Set the minimum date to today    
             dateInput.value = today;
             console.log("ISO date set to:", today);
         } else {
@@ -282,14 +284,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         var dateInput = document.getElementById('dateInput');
         var currentDate = new Date(dateInput.value);
         currentDate.setDate(currentDate.getDate() + days);
+        var today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date to remove time part
+        today.setDate(today.getDate() + 1); // Set the minimum allowable date to tomorrow
 
-        var year = currentDate.getFullYear();
-        var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Adds leading zero
-        var day = ('0' + currentDate.getDate()).slice(-2); // Adds leading zero
+        if (currentDate >= today) {
+            var year = currentDate.getFullYear();
+            var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Adds leading zero
+            var day = ('0' + currentDate.getDate()).slice(-2); // Adds leading zero
 
-        dateInput.value = `${year}-${month}-${day}`;
-        // Programmatically submit the form
-        document.getElementById('date-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            dateInput.value = `${year}-${month}-${day}`;
+            // Programmatically submit the form
+            document.getElementById('date-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));}
     }
 
     // Invoke these functions at the end to ensure they are attached at the start.

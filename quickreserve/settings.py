@@ -60,7 +60,7 @@ EMAIL_HOST = 'smtp.gmail.com'  # The hostname of your email provider
 EMAIL_PORT = 587  # Common port for SMTP
 EMAIL_USE_TLS = True  # Use TLS encryption
 EMAIL_HOST_USER = 'noreply.quickreserve@gmail.com'  # Your email address
-EMAIL_HOST_PASSWORD = 'bnvk flpf pjms ysmm'  # Your email account password
+EMAIL_HOST_PASSWORD = 'lcyp omyx nmvi urxe'  # Your email account password
 
 
 MIDDLEWARE = [

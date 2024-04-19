@@ -12,13 +12,12 @@ from django.utils import timezone
 from .models import Category, Unit, ReservationSlot, Reservation
 
 
-def optimize_category(category, strategy,day=None):  # day = today as default value
-    print("1optimize_category DEN JE ",day)
+def optimize_category(category,day=None):  # day = today as default value
     from base.views import create_slots_for_unit, delete_available_slots_for_category
-    print("2optimize_category DEN JE ",day)
     print("Starting optimization")
 
     day_start, day_end = get_day_start_end(day)
+    strategy = category.belongs_to_offer.manager_of_this_offer.managerprofile.optimization_strategy 
 
     # Fetch all units in the given category
     units = Unit.objects.filter(belongs_to_category=category)

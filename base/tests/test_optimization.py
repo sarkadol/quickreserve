@@ -32,7 +32,7 @@ class OptimizationTests(TestCase):
     def setUp(self):
         """Set up the necessary objects for the optimization tests."""
         self.category = CategoryFactory()
-        self.units = UnitFactory.create_batch(2, belongs_to_category=self.category)
+        self.units = UnitFactory.create_batch(100, belongs_to_category=self.category)
         self.day = timezone.now().date()
 
         # Create slots for each unit using the actual application logic
@@ -45,7 +45,7 @@ class OptimizationTests(TestCase):
             
         # Create 100 reservations with random start times and durations
         self.reservations = []
-        for _ in range(2):
+        for _ in range(100):
             start_hour = randint(0, 22)  # Reserve up to the 22nd hour to allow at least 1 hour duration
             duration_hours = randint(1, 2)  # Duration between 1 and 2 hours
             reservation_start = timezone.make_aware(datetime.combine(self.day, time(start_hour, 0)))
