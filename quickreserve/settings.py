@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'base.apps.BaseConfig',
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_extensions'
+    'django_extensions',
+    'django_celery_beat',
 ]
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 LOGIN_URL = 'login'
@@ -54,6 +55,9 @@ GRAPH_MODELS = {
   'all_applications': True,
   'group_models': True,
 }
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Example using Redis
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # The hostname of your email provider

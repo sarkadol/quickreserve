@@ -11,6 +11,31 @@ from base import models
 # Use datetime.datetime.combine correctly with datetime.date.today() and datetime.time
 # opening_time = timezone.make_aware(datetime.datetime.combine(datetime.date.today(), datetime.time(8, 0)))
 # closing_time = timezone.make_aware(datetime.datetime.combine(datetime.date.today(), datetime.time(23, 59, 59)))
+from django.contrib.auth.models import User
+from base.models import ManagerProfile
+import factory
+from factory.django import DjangoModelFactory
+
+class UserFactory(DjangoModelFactory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f"user{n}")
+    email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
+    password = factory.PostGenerationMethodCall('set_password', 'defaultpassword')
+
+class ManagerProfileFactory(DjangoModelFactory):
+    class Meta:
+        model = ManagerProfile
+
+    user = factory.SubFactory(UserFactory)
+    optimization_strategy = factory.Iterator(['min_units', 'equally_distributed'])
+    manager_link = factory.Faker('url')
+
+    def __str__(self):
+        return f"ManagerProfile for {self.user.username}"
+
+
 class OfferFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Offer
