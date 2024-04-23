@@ -1046,6 +1046,8 @@ def submit_reservation(request):
         return render(request, "reservation_status.html", context)
 
 
+
+
 def create_slots_for_unit(unit, day, opening_time, closing_time):
     """
     Create reservation slots for a specific unit on a given day within specified opening hours.
