@@ -1023,7 +1023,7 @@ def submit_reservation(request):
         - Start Date: {start_date}
         - End Date: {end_date}
         - Submission Time: {submission_time.strftime("%Y-%m-%d %H:%M:%S %Z")}
-        Please follow the link below to confirm your reservation:
+        Please follow the link below to confirm or cancel your reservation:
         {verification_link}
 
         If you did not make this reservation, please ignore this email.
@@ -1041,7 +1041,7 @@ def submit_reservation(request):
         # messages.success(request, success_message)
         context = {
             "header": "Reservation submitted",
-            "message": f'Please check your email "{customer_email}" to confirm the reservation.',
+            "message": f'Please check your email "{customer_email}" to confirm or cancel the reservation.',
         }
         return render(request, "reservation_status.html", context)
 
