@@ -90,13 +90,13 @@ def create_offer(request, offer_id=None):
             offer.manager_of_this_offer = request.user
 
             # Custom validation to check if available_from is before available_to
-            available_from = form.cleaned_data["available_from"]
+            """available_from = form.cleaned_data["available_from"]
             available_to = form.cleaned_data["available_to"]
             if available_from and available_to and available_from >= available_to:
                 error_message = "Available from date must be before available to date."
                 messages.error(request, error_message)
                 return render(request, "create_offer.html", context={"form": form})
-
+"""
             try:
                 offer.save()  # Attempt to save the offer to the database
                 offer_id = offer.id
@@ -885,7 +885,7 @@ def confirm_reservation(request, token):
 
             context = {
                 "header": "Reservation expired",
-                "message": "Your reservation link hase expired.",
+                "message": "Your reservation link hase expired. Please, make a new reservation.",
             }
 
             return render(request, "reservation_status.html", context)

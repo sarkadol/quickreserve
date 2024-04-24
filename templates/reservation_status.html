@@ -8,10 +8,10 @@
         <p class="lead">{{ message }}</p>
     </div>
     <!--<i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i> Checkmark icon -->
-    {% if header == "Reservation confirmed" %}
+    {% if header == "Reservation confirmed" or header == "Reservation cancelled" %}
     <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i> <!-- Checkmark icon -->
-    {% elif header == "Reservation expired" or header == "Reservation cancelled" %}
-    <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i> <!-- Checkmark icon -->
+    {% elif header == "Reservation expired" %}
+    <i class="bi bi-emoji-frown-fill" style="font-size: 2rem; color: #cf0b0b;"></i> <!-- Checkmark icon -->
     {% elif header == "Reservation submitted" %}
     <i class="bi bi-question-circle-fill" style="font-size: 2rem; color: #dcb835;"></i> <!-- Cross icon -->
     {% endif %}

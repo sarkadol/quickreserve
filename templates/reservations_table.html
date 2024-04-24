@@ -15,7 +15,7 @@
         {% if units_with_slots %}
         {% for unit in units_with_slots %}
         <tr>
-            <td>{{ unit.unit.unit_name }} {{ unit.unit.id }}</td>
+            <td>{{ unit.unit.unit_name }}</td>
             {% for slot in unit.reservation_slots %}
             {% if slot.status == "reserved" %}
             <td class="clickable-cell slot-reserved bg-danger" data-unit-id="{{ unit.unit.id }}"

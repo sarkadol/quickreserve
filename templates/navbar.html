@@ -1,4 +1,5 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+<nav class="navbar navbar-expand-lg" style="background-color: #e3f2fd;">
+
   <div class="container-fluid">
     <!--<a class="navbar-brand" href="#">Navbar</a>-->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
@@ -14,31 +15,32 @@
           <a class="nav-link" href="/create_offer">Create offer</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/managed_reservations">Managed reservations</a>
+          <a class="nav-link" href="/managed_reservations">Manage reservations</a>
         </li>
-        <li class="nav-item">
+        <!--<li class="nav-item">
           <a class="nav-link" href="/my_schedule">My category</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/my_schedule">My schedule</a>
-        </li>
+        </li>-->
         
         {% if request.user.is_authenticated %}
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'customer_home' manager_id=request.user.id %}">Customer home</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link" href="{% url 'manager_link' manager_id=request.user.id %}">Settings</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" target="_blank" href="{% url 'customer_home' manager_id=request.user.id %}">Customer home</a>
+        </li>
+        
         {% endif %}
 
       </ul>
-      <button type="submit" class="btn btn-primary me-2" onclick="goBack()">Back</button>
+      <!--<button type="submit" class="btn btn-primary me-2" onclick="goBack()">Back</button>
         <script>
           function goBack() {
             window.history.back();
           }
-        </script>
+        </script>-->
        <div class="d-flex align-items-center">
         
         <!-- Login/Logout Buttons -->

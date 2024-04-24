@@ -6,3 +6,18 @@
     cursor: pointer;
     background-color: #fa0000; /* Optional: highlight row on hover */
 }
+
+.alert-dismissible {
+    position: relative; /* Ensures the positioning context is set */
+}
+
+.btn-close {
+    position: absolute; /* Position absolutely within the relative container */
+    top: 50%; /* Center vertically */
+    right: 10px; /* 10px from the right */
+    transform: translateY(-50%); /* Adjust to truly center vertically */
+}
+
+.bg-primary {
+    background-color: #f1a2ee !important; /* Change to any color you want, this is just an example */
+}

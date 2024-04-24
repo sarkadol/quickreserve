@@ -7,6 +7,8 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <h1 class="text-center">Settings</h1>
+            <p>Below is your unique manager link. Click the button to copy it to the clipboard. You can add it to your website and let you customers easily choose service to reserve.</p>
+
             <div class="input-group mb-3">
                 <input type="text" class="form-control" id="linkToCopy" value="{{ profile.manager_link }}" readonly>
                 <div class="input-group-append">
@@ -19,8 +21,11 @@
             </div>
             <!-- Space between buttons -->
             <div class="mb-3"></div>
-            
-            
+            <hr style="margin-top: 40px; margin-bottom: 40px;">
+
+
+            <p>Select an optimization goal to configure how the system manages reservations:</p>
+
             <form method="POST" action="{% url 'save_optimization_strategy' %}">
                 {% csrf_token %}
                 <div class="input-group mb-3">
@@ -32,7 +37,10 @@
                         <option value="equally_distributed" {% if profile.optimization_strategy == "equally_distributed" %}selected{% endif %}>Equally distributed reservations</option>
                     </select>
                 </div>
+                
             </form>
+            <hr style="margin-top: 40px; margin-bottom: 40px;">
+            <p>Selected optimization runs every time a customer submits his reservation. Or you can run it manually by clicking at this button (e. g. when you change the strategy)</p>
             <!-- Center-align the Optimize button -->
             <div class="d-flex justify-content-center">
                 <!-- New Optimize Button, larger size -->

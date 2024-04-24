@@ -5,7 +5,7 @@
 <div class="container-md">
     <h1> {{ offer_name }} </h1>
 
-    <h2> Categories in this offer </h2>
+    <h2> Categories {{ offer_name }} </h2>
     {% if categories %}
     <table class="table table-hover">
         <thead>
@@ -34,7 +34,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <a onclick="location.href='{% url 'create_category' offer_id %}'" class="btn btn-outline-success" id="addrow">Add new category</a>
+    <a onclick="location.href='{% url 'create_category' offer_id %}'" class="btn btn-outline-success" id="addrow"><i class="bi bi-plus"style="margin-right: 10px;"></i>Add new category</a>
     {% else %}
     <p>You do not have any categories for this offer.<br>
         <a onclick="location.href='{% url 'create_category' offer_id %}'" class="btn btn-outline-success" id="addrow">Add new category</a>
@@ -45,7 +45,7 @@
     <form method="post" class="form">
         {% csrf_token %}
         {{ form|crispy }}
-        <button type="submit" class="btn btn-primary">Save changes</button>
+        <button type="submit" class="btn btn-primary" >Save changes</button>
     </form>
 
     <!-- Modified Delete Button to Trigger Modal -->

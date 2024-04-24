@@ -4,8 +4,8 @@
 
 {% block content %}
 
-<div class="container-md">
-    <h1> Manager home </h1>
+<div class="container-md" style="margin-top: 40px; margin-bottom: 40px;">
+    
     <p>Welcome to your management dashboard. Here you can create and manage your offers and categories to start taking reservations.</p>
 
     <h2>My offers</h2>
@@ -17,9 +17,9 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Offer name</th>
-                    <th scope="col">Offer id</th>
+                    <!--<th scope="col">Offer id</th>
                     <th scope="col">Available from</th>
-                    <th scope="col">Available to</th>
+                    <th scope="col">Available to</th>-->
                     <th scope="col">Created at</th>
                 </tr>
             </thead>
@@ -29,16 +29,16 @@
                     style="cursor: pointer;" title="Click to view offer detail">
                     <th scope="row">{{ forloop.counter }}</th>
                     <td>{{ offer.offer_name }} </td>
-                    <td>{{ offer.id }} </td>
+                    <!--<td>{{ offer.id }} </td>
                     <td>{{ offer.available_from }} </td>
-                    <td>{{ offer.available_to }} </td>
+                    <td>{{ offer.available_to }} </td>-->
                     <td>{{ offer.created_at }} </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <a href="{% url 'create_offer' %}" class="btn btn-outline-success " id="addrow">Add new offer</a>
+    <a href="{% url 'create_offer' %}" class="btn btn-outline-success " id="addrow"> <i class="bi bi-plus"style="margin-right: 10px;"></i>Add new offer</a>
     {% else %}
     <p>You do not have any offers yet. Start by creating your first offer to make your services available for booking.</p>
     <a href="{% url 'create_offer' %}" class="btn btn-success" id="addrow">Create your first Offer</a>
@@ -53,10 +53,10 @@
                 <th scope="col">#</th>
                 <th scope="col">Category name</th>
                 <th scope="col">Offer</th>
-                <!--<th scope="col">Max simultaneous reservations</th>-->
-                <th scope="col">Additional time</th>
-                <th scope="col">Max number of units</th>
-                <th scope="col">Real number of units</th>
+                <!--<th scope="col">Max simultaneous reservations</th>
+                <th scope="col">Additional time</th>-->
+                <th scope="col">Number of units</th>
+                <!--<th scope="col">Real number of units</th>-->
                 <th scope="col">Created at</th>
                 <th scope="col"> </th>
 
@@ -71,15 +71,15 @@
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ category.category_name }} </td>
                 <td>{{ category.belongs_to_offer }} </td>
-                <!--<td>{{ category.max_simultaneous_reservations }} </td>-->
-                <td>{{ category.additional_time }} </td>
+                <!--<td>{{ category.max_simultaneous_reservations }} </td>
+                <td>{{ category.additional_time }} </td>-->
                 <td>{{ category.count_of_units }} </td>
-                <td>{{ category.get_unit_count }} </td>
+                <!--<td>{{ category.get_unit_count }} </td>-->
                 <td>{{ category.created_at }} </td>
                 <!--<td> <button class="btn btn-primary btn-reservation-form"
                         data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">Res
                         form</button>-->
-                <td> <button class="btn btn-primary btn-reservation-calendar"
+                <td> <button class="btn btn-success btn-reservation-calendar"
                         data-offer-id="{{ category.belongs_to_offer.id }}" data-category-id="{{ category.id }}">New
                         reservation</button>
 

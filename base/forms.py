@@ -84,8 +84,10 @@ class OfferForm(ModelForm):
         exclude = [
             "manager_of_this_offer",
             "created_at",
+            "available_from",
+            "available_to"
         ]  # limiting the fields if that are displayed
-        widgets = {
+        """widgets = {
             "available_from": widgets.DateInput(
                 attrs={
                     "type": "date",
@@ -100,7 +102,7 @@ class OfferForm(ModelForm):
                     "value": datetime.now().date() + timedelta(days=1),
                 }
             ),
-        }
+        }"""
 
 
 class CategoryForm(ModelForm):
