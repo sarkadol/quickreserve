@@ -121,6 +121,8 @@ class CategoryForm(ModelForm):
             "category_pricing",
             "category_capacity",
             "unit_names",
+            "max_simultaneous_reservations",
+            "additional_time"
             # by now the system allows only 1:1 reservations
             # (not e g seminars, where more people can make a reservation for one time)
         ]  # limiting the fields if that are displayed

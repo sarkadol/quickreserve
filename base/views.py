@@ -977,6 +977,18 @@ def cancel_reservation(request, token):
     # Redirect to a cancellation confirmation page or similar
     return render(request, "reservation_status.html", context)
 
+def is_slot_available(start_date, end_date, category):
+    # Count how many reservations are active for the given period
+    overlapping_reservations_count = Reservation.objects.filter(
+        belongs_to_category=category,
+        reservation_from__lt=end_date,
+        reservation_to__gt=start_date,
+    ).count()
+
+    # Check if the existing reservations plus the new one exceed the total units available
+    # if true, no problem
+    return overlapping_reservations_count <= category.count_of_units
+    
 
 def submit_reservation(request):
     """
@@ -990,8 +1002,25 @@ def submit_reservation(request):
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         category_id = request.POST.get("category_id")
-        print("cat id", category_id)
         category = get_object_or_404(Category, pk=category_id)
+
+
+        # Check for overlapping reservations
+        if not is_slot_available(start_date, end_date, category):
+            error_message = f"Selected slot is no longer available."
+            messages.error(request, error_message)
+            context = {
+                "start_date": start_date,
+                "end_date": end_date,
+                "category_name": category.category_name,
+                "category_id": category_id,  # Assuming you want to pass the ID for form submission
+                #'user_timezone': user_timezone
+            }
+
+            return render(request, "reservation_details.html", context)
+
+
+        print("cat id", category_id)
         token = uuid.uuid4().hex
         submission_time = timezone.now()
 

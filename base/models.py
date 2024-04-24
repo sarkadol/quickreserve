@@ -71,8 +71,8 @@ class Category(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     unit_names = models.JSONField(default=list) # list of unit names
     # last_edited_at
-    opening_time = models.TimeField(default=datetime.time(0, 0))
-    closing_time = models.TimeField(default=datetime.time(23, 59,59)) #TODO 24:00 and default values 9:23-9:23
+    opening_time = models.TimeField(default=datetime.time(6, 0))
+    closing_time = models.TimeField(default=datetime.time(23, 0)) #TODO 24:00 and default values 9:23-9:23
 
     belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
     category_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE, null=True)
