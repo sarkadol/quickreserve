@@ -48,9 +48,16 @@ optimization_strategy = "min_units"
 
 class OptimizationTests(TestCase):
     def setUp(self):
+        """Setup basic components used in all tests."""
+        # This is intentionally left empty for dynamic setup in test methods
+        pass
+    
+
+
+    def setUpOld(self):
         """Set up the necessary objects for the optimization tests."""
         # Create a manager user and profile using factories
-        self.manager_user = UserFactory(username="manager")
+        self.manager_user = UserFactory()
         self.manager_profile = ManagerProfileFactory(
             user=self.manager_user, optimization_strategy=optimization_strategy
         )
@@ -109,8 +116,7 @@ class OptimizationTests(TestCase):
             if attempt == max_attempts:
                 raise Exception("Could not place all reservations without overlap.")
 
-            if attempt == max_attempts:
-                raise Exception("Could not place all reservations without overlap.")
+           
 
     def test_optimize_category(self):
         """Test the min_units optimization strategy."""
@@ -244,3 +250,161 @@ class OptimizationTests(TestCase):
         print(
             "Optimization maintains stability with additional non-overlapping reservation."
         )
+
+    def test_optimization_scenarios(self):
+            """Run tests across different configurations and strategies."""
+            configurations = [
+                (60, 10), (70, 10), (80, 10), (90, 10), (100, 10),
+                (60, 20), (70, 20), (80, 20), (90, 20), (100, 20),
+                (60, 30), (70, 30), (80, 30), (90, 30), (100, 30),
+                (60, 40), (70, 40), (80, 40), (90, 40), (100, 40),
+                (60, 50), (70, 50), (80, 50), (90, 50), (100, 50),
+                (10, 60), (20, 60), (30, 60), (40, 60), (50, 60),
+                (10, 70), (20, 70), (30, 70), (40, 70), (50, 70),
+                (10, 80), (20, 80), (30, 80), (40, 80), (50, 80),
+                (10, 90), (20, 90), (30, 90), (40, 90), (50, 90),
+                (10, 100), (20, 100), (30, 100), (40, 100), (50, 100)
+            ]
+            
+            with open("results.txt", 'w') as file:
+                file.write("{:<20} | {:>12} | {:>5} | {:>12}".format("Strategy", "Reservations", "Units", "Duration (s)")+'\n')
+
+            # (reservations,units)
+            strategies = ["min_units", "equally_distributed"]
+            results = []
+
+            for strategy in strategies:
+                for reservations, units in configurations:
+                    total_duration = 0
+                    for _ in range(3):  # Run the test three times
+                        duration = self.run_optimization_test(reservations, units, strategy)
+                        total_duration += duration
+                        
+                    average_duration = total_duration / 3     
+                    results.append({
+                        'strategy': strategy,
+                        'reservations': reservations,
+                        'units': units,
+                        'duration': average_duration  
+                    })
+                    try:
+                        print("attemt to write")
+                        with open("results.txt", 'a') as file:
+                            file.write("{:<20} | {:>12} | {:>5} | {:>12}\n".format(
+                                strategy, reservations, units, average_duration))
+                    except Exception as e:
+                        print("Error writing to file:", e)
+            # Printing results in a formatted table with aligned columns
+            print("{:<20} | {:>12} | {:>5} | {:>12}".format("Strategy", "Reservations", "Units", "Duration (s)"))
+            for result in results:
+                print("{:<20} | {:>12} | {:>5} | {:>12}".format(result['strategy'], result['reservations'], result['units'], result['duration']))
+                
+
+    def setup_test_data(self, number_of_reservations, number_of_units, optimization_strategy):
+        """Set up the necessary objects for the optimization tests."""
+        # Create a manager user and profile using factories
+        self.manager_user = UserFactory()
+        self.manager_profile = ManagerProfileFactory(
+            user=self.manager_user, optimization_strategy=optimization_strategy
+        )
+
+        # Create an Offer linked to this manager
+        self.offer = OfferFactory(manager_of_this_offer=self.manager_user)
+
+        # Create a Category that belongs to this Offer using CategoryFactory
+        self.category = CategoryFactory(belongs_to_offer=self.offer)
+        self.units = UnitFactory.create_batch(
+            number_of_units, belongs_to_category=self.category
+        )
+        self.day = timezone.now().date()
+
+        # Create slots for each unit using the actual application logic
+        opening_time = time(8, 0)  # Example opening time
+        closing_time = time(23, 59, 59)
+        for unit in self.units:
+            create_slots_for_unit(unit, self.day, opening_time, closing_time)
+
+        # Correcting reservation times
+
+        # Create 100 reservations with random start times and durations
+        self.reservations = []
+        occupied_slots = [0] * 24
+        for _ in range(number_of_reservations):
+            attempt = 0
+            max_attempts = 100  # Avoid infinite loop in case of no feasible time slots
+
+            while attempt < max_attempts:
+                start_hour = randint(8, 22)  # Avoid starting too late
+                duration_hours = randint(1, 2)  # Duration between 1 and 2 hours
+
+                # Check for slot availability
+                if all(occupied_slots[hour] < number_of_units for hour in range(start_hour, start_hour + duration_hours)):
+                    start_time = timezone.make_aware(
+                        datetime.combine(self.day, time(start_hour, 0))
+                    )
+                    end_time = start_time + timedelta(hours=duration_hours)
+
+                    # Create reservation
+                    reservation = ReservationFactory(
+                        belongs_to_category=self.category,
+                        reservation_from=start_time,
+                        reservation_to=end_time,
+                    )
+                    self.reservations.append(reservation)
+                    
+                    # Mark slots as occupied
+                    for hour in range(start_hour, start_hour + duration_hours):
+                        occupied_slots[hour] += 1
+                    break
+
+                attempt += 1
+
+            if attempt == max_attempts:
+                raise Exception("Could not place all reservations without overlap.")
+
+           
+    
+    
+        
+    def run_optimization_test(self, number_of_reservations, number_of_units, optimization_strategy):
+        """Generic test method for running optimization with variable inputs."""
+        # Dynamic setup based on parameters
+        self.setup_test_data(number_of_reservations, number_of_units, optimization_strategy)
+
+        # Run optimization
+        start_time = timezone.now()
+        optimize_category(self.category, self.day)
+        end_time = timezone.now()
+
+
+        # Duration and result processing
+        duration = (end_time - start_time).total_seconds()
+        all_slots = ReservationSlot.objects.filter(
+            unit__belongs_to_category=self.category, start_time__date=self.day
+        )
+
+        
+        # Check that reservations are not overlapping within units
+        for unit in self.units:
+            unit_slots = all_slots.filter(unit=unit).order_by("start_time")
+            last_end_time = None
+            for slot in unit_slots:
+                if slot.reservation:
+                    if last_end_time and slot.start_time < last_end_time:
+                        self.fail(f"Overlapping reservation found in unit {unit.id}")
+                    last_end_time = slot.end_time
+
+        # Optionally, check the minimum number of units used
+        used_units = {slot.unit.id for slot in all_slots if slot.reservation}
+        print(f"Used units: {used_units}")
+        self.assertTrue(
+            len(used_units) <= len(self.reservations), "More units used than necessary"
+        )
+        print("Duration: ", end_time - start_time, " seconds")
+        print("units: ",number_of_units)
+        print("reservations: ",number_of_reservations)
+
+        print("Optimization test for min_units strategy passed.")
+
+
+        return duration
