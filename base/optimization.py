@@ -49,13 +49,14 @@ def optimize_category(category,day=None):  # day = today as default value
 
         print("equally_distributed OPT_STRATEGY")
 
-    print_results(units,reservations, optimized_reservations_to_units)
-    print_assignment_summary(units, reservations, optimized_reservations_to_units)
+    #print_results(units,reservations, optimized_reservations_to_units)
+    #print_assignment_summary(units, reservations, optimized_reservations_to_units)
+    print_assignment_summary_sorted(units, reservations, optimized_reservations_to_units)
 
     # optimized_reservations_to_units =optimize_category_free_time(units, slots, reservations) #not working yet
     # optimized_reservations_to_units =optimize_category_equally_distributed(units, slots, reservations)
 
-    print_assignment(optimized_reservations_to_units, units, reservations)
+    #print_assignment(optimized_reservations_to_units, units, reservations)
     assign_optimized_reservations_to_slots(
         units, reservations, optimized_reservations_to_units, slots
     )
@@ -214,7 +215,7 @@ def assign_optimized_reservations_to_slots(units, reservations, assignment_dict,
 
 
 def print_assignment(assignment_dict, units, reservations):
-    print("Reservation Assignments:\n")
+    print("-------------Reservation Assignments:\n")
     for unit in units:
         print(f"Unit {unit.id}:")
         assigned = False  # Track if any reservations are assigned to this unit
@@ -298,9 +299,11 @@ def optimize_category_equally_distributed_by_time(units, slots,reservations):
         }
 
         print("Optimization complete.")
+        print("maximum time: ", max_time.value())
         return assignment_dict
     
 # Utility Function: Print Detailed Assignment Results
+# TODO not working by now
 def print_results(units, reservations, assignment_dict):
     print("PRINTING FUNCTION")
     # Initialize a dictionary to hold reservation details by unit
@@ -325,18 +328,44 @@ def print_results(units, reservations, assignment_dict):
 
 # Function: Print Assignment Summary
 def print_assignment_summary(units, reservations, assignment_dict):
-    print("PRINTING ASSIGMENT")
-    print("Reservation Assignments:\n")
+    print("-------------Reservation Assignments summary:\n")
     for unit in units:
         print(f"Unit {unit.id}:")
         assigned = False  # Track if any reservations are assigned to this unit
         for reservation in reservations:
             if assignment_dict.get((unit.id, reservation.id)) == 1:
                 print(
-                    f"  - Reservation {reservation.id} assigned. (Customer: {reservation.customer_name}, Time: {reservation.reservation_from.strftime('%Y-%m-%d %H:%M')} to {reservation.reservation_to.strftime('%Y-%m-%d %H:%M')})"
+                    f"  - Reservation {reservation.id} assigned. (Time: {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')}, Customer: {reservation.customer_name})"
                 )
                 assigned = True
         if not assigned:
             print("  No reservations assigned.")
+        print("")  # Add an empty line for better readability between units
+
+from datetime import datetime
+
+def print_assignment_summary_sorted(units, reservations, assignment_dict):
+    print("-------------Reservation Assignments Summary:\n")
+    for unit in units:
+        print(f"Unit {unit.id}:")
+
+        # Collect reservations assigned to this unit
+        unit_reservations = []
+        for reservation in reservations:
+            if assignment_dict.get((unit.id, reservation.id)) == 1:
+                unit_reservations.append(reservation)
+
+        # Sort reservations by the start time
+        unit_reservations.sort(key=lambda x: x.reservation_from)
+
+        # Print sorted reservations
+        if unit_reservations:
+            for reservation in unit_reservations:
+                print(
+                    f"  - Reservation {reservation.id:2} assigned. (Time: {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')}, Customer: {reservation.customer_name})"
+                )
+        else:
+            print("  No reservations assigned.")
+        
         print("")  # Add an empty line for better readability between units
 

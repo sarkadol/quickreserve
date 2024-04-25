@@ -40,10 +40,10 @@ from django.utils import timezone
 import time as time_module
 
 # change this to set different test conditions
-number_of_reservations = 6
-number_of_units = 4
-optimization_strategy = "equally_distributed"
-#optimization_strategy = "min_units"
+number_of_reservations = 25
+number_of_units = 10
+#optimization_strategy = "equally_distributed"
+optimization_strategy = "min_units"
 
 
 class OptimizationTests(TestCase):
@@ -75,24 +75,46 @@ class OptimizationTests(TestCase):
 
         # Create 100 reservations with random start times and durations
         self.reservations = []
+        occupied_slots = [0] * 24
         for _ in range(number_of_reservations):
-            start_hour = randint(
-                0, 22
-            )  # Reserve up to the 22nd hour to allow at least 1 hour duration
-            duration_hours = randint(1, 2)  # Duration between 1 and 2 hours
-            reservation_start = timezone.make_aware(
-                datetime.combine(self.day, time(start_hour, 0))
-            )
-            reservation_end = reservation_start + timedelta(hours=duration_hours)
-            reservation = ReservationFactory(
-                belongs_to_category=self.category,
-                reservation_from=reservation_start,
-                reservation_to=reservation_end,
-            )
-            self.reservations.append(reservation)
+            attempt = 0
+            max_attempts = 100  # Avoid infinite loop in case of no feasible time slots
 
-    def test_optimize_category_min_units(self):
+            while attempt < max_attempts:
+                start_hour = randint(8, 22)  # Avoid starting too late
+                duration_hours = randint(1, 2)  # Duration between 1 and 2 hours
+
+                # Check for slot availability
+                if all(occupied_slots[hour] < number_of_units for hour in range(start_hour, start_hour + duration_hours)):
+                    start_time = timezone.make_aware(
+                        datetime.combine(self.day, time(start_hour, 0))
+                    )
+                    end_time = start_time + timedelta(hours=duration_hours)
+
+                    # Create reservation
+                    reservation = ReservationFactory(
+                        belongs_to_category=self.category,
+                        reservation_from=start_time,
+                        reservation_to=end_time,
+                    )
+                    self.reservations.append(reservation)
+                    
+                    # Mark slots as occupied
+                    for hour in range(start_hour, start_hour + duration_hours):
+                        occupied_slots[hour] += 1
+                    break
+
+                attempt += 1
+
+            if attempt == max_attempts:
+                raise Exception("Could not place all reservations without overlap.")
+
+            if attempt == max_attempts:
+                raise Exception("Could not place all reservations without overlap.")
+
+    def test_optimize_category(self):
         """Test the min_units optimization strategy."""
+        print(">>OPTIMIZE CATEGORY TEST<<")
 
         start_time = time_module.time()  # Start timing using the time module
         optimize_category(self.category, self.day)
@@ -120,13 +142,16 @@ class OptimizationTests(TestCase):
             len(used_units) <= len(self.reservations), "More units used than necessary"
         )
         print("Duration: ", end_time - start_time, " seconds")
+        print("units: ",number_of_units)
+        print("reservations: ",number_of_reservations)
 
         print("Optimization test for min_units strategy passed.")
 
-    def test_optimize_category_min_units_consistency(self):
+    def test_optimize_category_consistency(self):
         """Test the min_units optimization strategy consistency over multiple runs."""
-        print("CONSISTENCY TEST")
+        print(">>CONSISTENCY TEST<<")
         # First optimization run
+        print(">>FIRST RUN<<")
         optimize_category(self.category, self.day)
         first_run_slots = ReservationSlot.objects.filter(
             unit__belongs_to_category=self.category, start_time__date=self.day
@@ -138,6 +163,7 @@ class OptimizationTests(TestCase):
         ).update(reservation=None)
 
         # Second optimization run
+        print(">>SECOND RUN<<")
         optimize_category(self.category, self.day)
         second_run_slots = ReservationSlot.objects.filter(
             unit__belongs_to_category=self.category, start_time__date=self.day
