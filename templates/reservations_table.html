@@ -28,7 +28,7 @@
                 data-category-id="{{ category_id }}">
                 C
             {% elif slot.status == "pending" %}
-            <td class="clickable-cell slot-pending bg-warning" data-unit-id="{{ unit.unit.id }}"
+            <td class="clickable-cell slot-pending " style="background-color: yellow" data-unit-id="{{ unit.unit.id }}"
                 data-hour="{{ slot.start_time|date:'H' }}" data-category-name="{{ category_name }}"
                 data-category-id="{{ category_id }}">
                 P    

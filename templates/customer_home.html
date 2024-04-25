@@ -44,8 +44,7 @@
         <tbody>
 
             {% for category in categories %}
-            <tr class="clickable-row" style="cursor: pointer;" title="Click to edit category"
-                onclick="location.href='{% url 'edit_category' category.belongs_to_offer.id category.id %}'">
+            <tr class="clickable-row" >
 
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ category.category_name }} </td>

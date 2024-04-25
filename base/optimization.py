@@ -40,21 +40,12 @@ def optimize_category(category,day=None):  # day = today as default value
 
     for unit in units:
         create_slots_for_unit(unit, day, category.opening_time, category.closing_time)
-    # print(f"> Slots for day {day}:")
-    # for slot in slots:
-    # print(f"{slot.unit.id} - {slot.start_time.strftime('%H:%M')} - {slot.status} ")
-
-    # optimize function  SELECT
-    optimized_reservations_to_units = optimize_category_min_units(
-        units, slots, reservations
-    )
-
+    
+    #select a strategy
     if strategy == "min_units":
         optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
-       # print("min_units OPT_STRATEGY")
     elif strategy == "equally_distributed":
         optimized_reservations_to_units = optimize_category_equally_distributed_by_time(units, slots, reservations)
-        #optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
 
         print("equally_distributed OPT_STRATEGY")
 
@@ -252,19 +243,15 @@ def optimize_category_equally_distributed_by_time(units, slots,reservations):
         cat="Binary"
     )
 
-    # Auxiliary variable to capture the maximum total reserved time on any unit
+    # Objective function to minimize the maximum total reserved time on any unit
     max_time = pulp.LpVariable("max_time", lowBound=0, cat="Continuous")
 
-    # Objective function to minimize the maximum total reserved time on any unit
-    prob += max_time
+    # Define the objective function to minimize the maximum total reserved time on any unit
+    objective = max_time
 
-    # Constraint: Each reservation must be in exactly one unit
-    for reservation in reservations:
-        prob += (
-            pulp.lpSum(x[unit.id, reservation.id] for unit in units) == 1,
-            f"One_Unit_Per_Reservation_{reservation.id}",
-        )
-
+    # Explicitly set the objective function using setObjective
+    prob.setObjective(objective)
+    
     # Constraint: Link the maximum time variable to the total reserved time per unit
     for unit in units:
         total_time_for_unit = pulp.lpSum(
@@ -273,6 +260,13 @@ def optimize_category_equally_distributed_by_time(units, slots,reservations):
         )
         prob += max_time >= total_time_for_unit, \
                f"max_time_per_unit_{unit.id}"
+
+    # Constraint: Each reservation must be in exactly one unit
+    for reservation in reservations:
+        prob += (
+            pulp.lpSum(x[unit.id, reservation.id] for unit in units) == 1,
+            f"One_Unit_Per_Reservation_{reservation.id}",
+        )
 
     # Constraint: No overlapping reservations in any unit
     for unit in units:

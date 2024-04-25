@@ -58,8 +58,30 @@
         <span id="start-time-info"></span> to
         <span id="end-time-info"></span> 
     </div>
+
+    <div class="reservation-legend mt-3">
+        <h5>Legend:</h5>
+        <ul class="list-inline">
+            <li class="list-inline-item"><span class="legend-box" style="background-color: #ffffff;"></span> * = Available slots</li>
+            <li class="list-inline-item"><span class="legend-box" style="background-color: #ccffcc;"></span> * = Chosen slots</li>
+            <li class="list-inline-item "><span class="legend-box bg-danger" ></span> R = Reserved</li>
+            <li class="list-inline-item"><span class="legend-box" style="background-color: orange;"></span> C = Closed</li>
+            <li class="list-inline-item"><span class="legend-box" style="background-color: yellow"></span> P = Pending Reservation</li>
+        </ul>
+    </div>
+
     <button id="nextButton" class="btn btn-primary" disabled>Next</button> <!-- The Next button, initially disabled -->
 
 </div>
 
 {% endblock %}
+<!-- Additional CSS for legend -->
+<style>
+    .legend-box {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+        border: 1px solid #000;
+    }
+</style>

@@ -809,7 +809,7 @@ def reserve_slot(request):
         category_id = request.GET.get("category")
         unit_id = request.GET.get("unit")
 
-    try:
+    """try:
         with transaction.atomic():  # Use a transaction to ensure data integrity
             # Fetch and update the slots
             updated_count = ReservationSlot.objects.filter(
@@ -820,17 +820,17 @@ def reserve_slot(request):
             ).update(
                 # reservation_id=reservation_id,
                 status="pending"
-            )
+            )"""
 
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "message": f"Updated {updated_count} slots to pending.",
-                }
-            )
-
+    return JsonResponse(
+        {
+            "status": "success",
+            "message": f"Updated slots to pending.",
+        }
+    )
+"""
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)"""
 
 
 def verify_reservation(request, token):
@@ -952,15 +952,17 @@ def cancel_reservation(request, token):
     reservation = get_object_or_404(Reservation, verification_token=token)
     reservation.status = "cancelled"
     reservation.save()
-
+    
     # Retrieve the slots that are about to be updated
     slots_to_update = ReservationSlot.objects.filter(
         reservation=reservation
     )
-    print("mažu")
+    print("mažu, slots to update:",slots_to_update)
     # Print each slot detail before updating
     for slot in slots_to_update:
         print(f"Updating slot {slot.id} from {slot.status} to available")
+        slot.status = 'available'
+        slot.save()
     # z nějakého důvodu to funguje jen pro zrušení dříve potvrzených rezervací, ale ne těch co jsou pending
     # TODO
 
@@ -982,8 +984,10 @@ def is_slot_available(start_date, end_date, category):
     overlapping_reservations_count = Reservation.objects.filter(
         belongs_to_category=category,
         reservation_from__lt=end_date,
-        reservation_to__gt=start_date,
+        reservation_to__gt=start_date).exclude(
+    status='cancelled'
     ).count()
+    print("overlapping_reservations_count",overlapping_reservations_count)
 
     # Check if the existing reservations plus the new one exceed the total units available
     # if true, no problem

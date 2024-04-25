@@ -39,8 +39,9 @@ from datetime import datetime, timedelta, time
 from django.utils import timezone
 import time as time_module
 
+# change this to set different test conditions
 number_of_reservations = 6
-number_of_units = 16
+number_of_units = 4
 optimization_strategy = "equally_distributed"
 #optimization_strategy = "min_units"
 
@@ -212,7 +213,7 @@ class OptimizationTests(TestCase):
                 break
 
         self.assertTrue(
-            unchanged, "Original reservation assignments changed unnecessarily."
+            unchanged, "Original reservation assignments changed."
         )
         print(
             "Optimization maintains stability with additional non-overlapping reservation."
