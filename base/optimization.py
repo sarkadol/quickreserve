@@ -40,14 +40,14 @@ def optimize_category(category,day=None):  # day = today as default value
 
     for unit in units:
         create_slots_for_unit(unit, day, category.opening_time, category.closing_time)
-    
     #select a strategy
+    
     if strategy == "min_units":
         optimized_reservations_to_units = optimize_category_min_units(units, slots, reservations)
     elif strategy == "equally_distributed":
         optimized_reservations_to_units = optimize_category_equally_distributed_by_time(units, slots, reservations)
-
-        print("equally_distributed OPT_STRATEGY")
+    else:
+        return
 
     #print_results(units,reservations, optimized_reservations_to_units)
     #print_assignment_summary(units, reservations, optimized_reservations_to_units)

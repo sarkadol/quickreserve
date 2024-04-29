@@ -35,6 +35,7 @@
                     <select class="custom-select" id="optimizationStrategy" name="optimizationStrategy">
                         <option value="min_units" {% if profile.optimization_strategy == "min_units" %}selected{% endif %}>Minimal units usage</option>
                         <option value="equally_distributed" {% if profile.optimization_strategy == "equally_distributed" %}selected{% endif %}>Equally distributed reservations</option>
+                        <option value="no_optimization" {% if profile.optimization_strategy == "no_optimization" %}selected{% endif %}> No optimalization </option>
                     </select>
                 </div>
                 

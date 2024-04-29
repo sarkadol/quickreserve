@@ -20,7 +20,8 @@ class ManagerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='managerprofile')
     optimization_strategy = models.CharField(max_length=30, default='min_units', choices=[
         ('min_units', 'Minimal units usage'),
-        ('equally_distributed', 'Equally distributed reservations')
+        ('equally_distributed', 'Equally distributed reservations'),
+        ('no_optimization','No optimizaton')
     ])
     manager_link = models.URLField(max_length=200, blank=True)
 

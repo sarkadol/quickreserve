@@ -1285,6 +1285,14 @@ def optimize(request):
     #strategy="equally_distributed"
     strategy=request.user.managerprofile.optimization_strategy 
     # Assuming you have a function to optimize categories
+    if strategy=='no_optimization':
+        print('not optimizing')
+         
+        error_message = "No optimization strategy was chosen"
+        messages.error(request, error_message)
+        return render(
+        request, "manager_link.html",{'profile':profile}   ) 
+
     try:
         # Optimizing only for tomorrow
         day_to_optimize = start_day
@@ -1305,7 +1313,7 @@ def optimize(request):
     return render(
         request, "manager_link.html",{'profile':profile}
         
-    )  # Replace 'some-view-name' with the actual view you want to redirect to
+    )  
 
 def save_optimization_strategy(request):
     print("save_optimization_strategy")
