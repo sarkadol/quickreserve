@@ -520,6 +520,7 @@ def managed_reservations(request):
     reservations = (
         Reservation.objects.filter(belongs_to_category__in=categories)
         .select_related("belongs_to_category", "belongs_to_category__belongs_to_offer")
+        .prefetch_related("slots__unit")  # prefetching units through slots
         .order_by("-submission_time",
             "reservation_from", "belongs_to_category__belongs_to_offer__offer_name"
         )

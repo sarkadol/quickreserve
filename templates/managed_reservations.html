@@ -17,11 +17,12 @@
                     <th scope="col">ID</th>
                     <th scope="col">Category Name</th>
                     <th scope="col">Offer Name</th>
-                    <th scope="col">Reservation From</th>
-                    <th scope="col">Reservation To</th>
+                    <th scope="col">From</th>
+                    <th scope="col">To</th>
                     <th scope="col">Customer Email</th>
                     <th scope="col">Created at</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Unit</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,6 +37,17 @@
                     <td>{{ reservation.customer_email }}</td>
                     <td>{{ reservation.submission_time|date:"Y-m-d H:i" }}</td>
                     <td>{{ reservation.status}}</td>
+                    <td>
+                        {% with reservation.slots.all|first as slot %}
+                            {% if slot and slot.unit.unit_name %}
+                                {{ slot.unit.unit_name }}
+                            {% elif slot and slot.unit %}
+                                {{ slot.unit.id }}
+                            {% else %}
+                                No Unit
+                            {% endif %}
+                        {% endwith %}
+                    </td>
 
                     <!--<td>{{ reservation.verification_token}}</td>-->
                 </tr>

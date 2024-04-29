@@ -29,7 +29,7 @@ def optimize_category(category,day=None):  # day = today as default value
         "> Reservations for the day:\n"
         + "\n".join(
             [
-                f"Reservation from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
+                f"Reservation {reservation.id} from {reservation.reservation_from.strftime('%H:%M')} to {reservation.reservation_to.strftime('%H:%M')} by {reservation.customer_name} ({reservation.status})"
                 for reservation in reservations
             ]
         )
@@ -52,6 +52,7 @@ def optimize_category(category,day=None):  # day = today as default value
     #print_results(units,reservations, optimized_reservations_to_units)
     #print_assignment_summary(units, reservations, optimized_reservations_to_units)
     print_assignment_summary_sorted(units, reservations, optimized_reservations_to_units)
+    print_assignment_summary_table(units, reservations, optimized_reservations_to_units)
 
     # optimized_reservations_to_units =optimize_category_free_time(units, slots, reservations) #not working yet
     # optimized_reservations_to_units =optimize_category_equally_distributed(units, slots, reservations)
@@ -343,6 +344,21 @@ def print_assignment_summary(units, reservations, assignment_dict):
         print("")  # Add an empty line for better readability between units
 
 from datetime import datetime
+def print_assignment_summary_table(units, reservations, assignment_dict):
+    row="x "
+    for unit in units:
+        row += "U"+str(unit.id)+" "
+    print(row)  #header  
+    row=""
+    for reservation in reservations:
+        #print(reservation.id)
+        row += "R" + str(reservation.id)+" "
+        for unit in units:
+            row+=str(assignment_dict.get((unit.id, reservation.id))) + " "
+            #print(assignment_dict.get((unit.id, reservation.id)))
+        print(row)
+        row=""
+
 
 def print_assignment_summary_sorted(units, reservations, assignment_dict):
     print("-------------Reservation Assignments Summary:\n")

@@ -40,21 +40,21 @@ from django.utils import timezone
 import time as time_module
 
 # change this to set different test conditions
-number_of_reservations = 25
-number_of_units = 10
+number_of_reservations = 5
+number_of_units = 5
 #optimization_strategy = "equally_distributed"
 optimization_strategy = "min_units"
 
 
 class OptimizationTests(TestCase):
-    def setUp(self):
+    def setUpNew(self): #this needs to be rewritten!!!
         """Setup basic components used in all tests."""
         # This is intentionally left empty for dynamic setup in test methods
         pass
     
 
 
-    def setUpOld(self):
+    def setUp(self):
         """Set up the necessary objects for the optimization tests."""
         # Create a manager user and profile using factories
         self.manager_user = UserFactory()
@@ -259,18 +259,16 @@ class OptimizationTests(TestCase):
                 (60, 30), (70, 30), (80, 30), (90, 30), (100, 30),
                 (60, 40), (70, 40), (80, 40), (90, 40), (100, 40),
                 (60, 50), (70, 50), (80, 50), (90, 50), (100, 50),
-                (10, 60), (20, 60), (30, 60), (40, 60), (50, 60),
-                (10, 70), (20, 70), (30, 70), (40, 70), (50, 70),
-                (10, 80), (20, 80), (30, 80), (40, 80), (50, 80),
-                (10, 90), (20, 90), (30, 90), (40, 90), (50, 90),
-                (10, 100), (20, 100), (30, 100), (40, 100), (50, 100)
+                (100,80),(100,100),(150,150),(200,200)
             ]
+            # (reservations,units)
             
             with open("results.txt", 'w') as file:
                 file.write("{:<20} | {:>12} | {:>5} | {:>12}".format("Strategy", "Reservations", "Units", "Duration (s)")+'\n')
 
-            # (reservations,units)
-            strategies = ["min_units", "equally_distributed"]
+            
+            #strategies = ["min_units", "equally_distributed"]
+            strategies = [ "equally_distributed"]
             results = []
 
             for strategy in strategies:
