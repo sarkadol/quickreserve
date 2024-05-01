@@ -49,14 +49,14 @@ class Offer(models.Model):
             "manager_of_this_offer",
         )  # there cannot be two same named offers managed by the same user
 
-class Pricing(models.Model):
+"""class Pricing(models.Model):
     # pricing_id = models.IntegerField(primary_key=True)
     pricing_name = models.CharField(max_length=50)
     price = models.IntegerField()
     pricing_time_from = models.DateField(null=True, blank=True)
     pricing_time_to = models.DateField(null=True, blank=True)
     # maybe some price value needed (12/hour, 23/room, /parkplace)
-    pricing_notes = models.CharField(max_length=200, null=True, blank=True)
+    pricing_notes = models.CharField(max_length=200, null=True, blank=True)"""
 
 
 class Category(models.Model):
@@ -76,7 +76,7 @@ class Category(models.Model):
     closing_time = models.TimeField(default=datetime.time(23, 0)) #TODO 24:00 and default values 9:23-9:23
 
     belongs_to_offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
-    category_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE, null=True)
+    #category_pricing = models.ForeignKey(Pricing, on_delete=models.CASCADE, null=True)
 
     # offer_user = models.ForeignKey(User, on_delete=models.CASCADE)
     def get_unit_count(self):
